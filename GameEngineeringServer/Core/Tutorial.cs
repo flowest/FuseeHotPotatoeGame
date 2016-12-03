@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
@@ -178,6 +181,11 @@ namespace Fusee.Tutorial.Core
 
         private Renderer _renderer;
 
+        System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
+        ControlsForNetwork controls = new ControlsForNetwork();
+        MemoryStream memoryStream = new MemoryStream();
+        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+
 
 
         // Init is called on startup. 
@@ -210,6 +218,8 @@ namespace Fusee.Tutorial.Core
             netCon.Config.SysType = SysType.Server;
             netCon.StartPeer();
 
+            customCulture.NumberFormat.NumberDecimalSeparator = ",";
+
             //netCon.Config.ConnectOnDiscovery = true;
             //netCon.Config.Discovery = true;
             //netCon.SendDiscoveryMessage();
@@ -233,11 +243,17 @@ namespace Fusee.Tutorial.Core
         public override void RenderAFrame()
         {
 
+            float WSAxisIputFromClient = 0;
             for (int i = 0; i < NetworkImplementor.IncomingMsg.Count; i++)
             {
                 if (NetworkImplementor.IncomingMsg[i].Message.ReadBytes != null)
                 {
-                    System.Diagnostics.Debug.WriteLine(GetString(NetworkImplementor.IncomingMsg[i].Message.ReadBytes));
+                    //System.Diagnostics.Debug.WriteLine(GetString(NetworkImplementor.IncomingMsg[i].Message.ReadBytes));
+                    //WSAxisIputFromClient = float.Parse(GetString(NetworkImplementor.IncomingMsg[i].Message.ReadBytes), customCulture);
+                    //System.Diagnostics.Debug.WriteLine(WSAxisIputFromClient);
+                    memoryStream = new MemoryStream(NetworkImplementor.IncomingMsg[i].Message.ReadBytes);
+                    controls = (ControlsForNetwork)jsonSerializer.ReadObject(memoryStream);
+                    System.Diagnostics.Debug.WriteLine(controls._ADAxis + " + " + controls._WSAxis);
                 }
                 NetworkImplementor.IncomingMsg.RemoveAt(i);
             }
@@ -304,8 +320,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = Keyboard.WSAxis * Keyboard.ADAxis * 0.03f;
-            float wuggySpeed = Keyboard.WSAxis * -10;
+            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f;
+            float wuggySpeed = controls._WSAxis * -10;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -370,7 +386,7 @@ namespace Fusee.Tutorial.Core
             RC.Projection = mtxOffset * _projection;
 
 
-            //_renderer.Traverse(_scene.Children);
+            _renderer.Traverse(_scene.Children);
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();

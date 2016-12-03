@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
+using System.Runtime.Serialization.Json;
 using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Engine.Common;
@@ -90,7 +93,7 @@ namespace Fusee.Tutorial.Core
         protected override void PopState()
         {
             _model.Pop();
-            RC.ModelView = View*_model.Tos;
+            RC.ModelView = View * _model.Tos;
         }
         [VisitMethod]
         void OnMesh(MeshComponent mesh)
@@ -179,6 +182,10 @@ namespace Fusee.Tutorial.Core
         private Renderer _renderer;
 
 
+        ControlsForNetwork controls = new ControlsForNetwork();
+        MemoryStream memoryStream = new MemoryStream();
+        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+        private byte[] controlsByteArray;
 
         // Init is called on startup. 
         public override void Init()
@@ -207,7 +214,7 @@ namespace Fusee.Tutorial.Core
             RC.ClearColor = new float4(1, 1, 1, 1);
 
             Network netCon = Network.Instance;
-            netCon.Config.SysType = SysType.Client;;
+            netCon.Config.SysType = SysType.Client; ;
             //netCon.Config.ConnectOnDiscovery = true;
             //netCon.Config.Discovery = true;
             //netCon.StartPeer();
@@ -215,11 +222,7 @@ namespace Fusee.Tutorial.Core
             //netCon.SendDiscoveryMessage();
             // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
-            netCon.OpenConnection("141.28.130.231");
-
-
-            Network.Instance.SendMessage(GetBytes("So, yeah!"), MessageDelivery.ReliableOrdered, 1);
-
+            netCon.OpenConnection("127.0.0.1");
 
 
         }
@@ -231,19 +234,36 @@ namespace Fusee.Tutorial.Core
             return bytes;
         }
 
+        private void getInputForNetwork()
+        {
+            memoryStream = new MemoryStream();
+            controls._ADAxis = Keyboard.ADAxis;
+            controls._WSAxis = Keyboard.WSAxis;
+
+            jsonSerializer.WriteObject(memoryStream, controls);
+            controlsByteArray = memoryStream.ToArray();
+            
+            Network.Instance.SendMessage(controlsByteArray, MessageDelivery.ReliableOrdered, 1);
+            memoryStream.Dispose();
+        }
+
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
+            getInputForNetwork();
+
             if (Keyboard.IsKeyDown(KeyCodes.A))
             {
-                Network.Instance.SendMessage(GetBytes("A is pressed!"), MessageDelivery.ReliableOrdered, 1);
+                //Network.Instance.SendMessage(GetBytes("A is pressed!"), MessageDelivery.ReliableOrdered, 1);
+
             }
 
-            if (Keyboard.IsKeyDown(KeyCodes.W))
-            {
-                Network.Instance.SendMessage(GetBytes("W is pressed!"), MessageDelivery.ReliableOrdered, 1);
-            }
+            //if (Keyboard.IsKeyDown(KeyCodes.W))
+            //{
+            //    Network.Instance.SendMessage(GetBytes("W is pressed!"), MessageDelivery.ReliableOrdered, 1);
+            //}
 
+            //Network.Instance.SendMessage(GetBytes(Keyboard.WSAxis.ToString()), MessageDelivery.ReliableOrdered, 1);
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
@@ -371,8 +391,8 @@ namespace Fusee.Tutorial.Core
             var mtxOffset = float4x4.CreateTranslation(2 * _offset.x / Width, -2 * _offset.y / Height, 0);
             RC.Projection = mtxOffset * _projection;
 
-            
-            //_renderer.Traverse(_scene.Children);
+
+            _renderer.Traverse(_scene.Children);
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();

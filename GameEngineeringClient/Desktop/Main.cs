@@ -12,8 +12,6 @@ namespace Fusee.Tutorial.Desktop
 {
     public class Simple
     {
-
-
         //Custom stuff
         private static bool isServer = true;
 
