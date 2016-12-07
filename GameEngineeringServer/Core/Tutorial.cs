@@ -242,20 +242,16 @@ namespace Fusee.Tutorial.Core
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
+            INetworkMsg msg;
 
-            float WSAxisIputFromClient = 0;
-            for (int i = 0; i < NetworkImplementor.IncomingMsg.Count; i++)
+            while ((msg = Network.Instance.IncomingMsg) != null)
             {
-                if (NetworkImplementor.IncomingMsg[i].Message.ReadBytes != null)
+                if (msg.Type == MessageType.Data)
                 {
-                    //System.Diagnostics.Debug.WriteLine(GetString(NetworkImplementor.IncomingMsg[i].Message.ReadBytes));
-                    //WSAxisIputFromClient = float.Parse(GetString(NetworkImplementor.IncomingMsg[i].Message.ReadBytes), customCulture);
-                    //System.Diagnostics.Debug.WriteLine(WSAxisIputFromClient);
-                    memoryStream = new MemoryStream(NetworkImplementor.IncomingMsg[i].Message.ReadBytes);
-                    controls = (ControlsForNetwork)jsonSerializer.ReadObject(memoryStream);
+                    memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                    controls = (ControlsForNetwork) jsonSerializer.ReadObject(memoryStream);
                     System.Diagnostics.Debug.WriteLine(controls._ADAxis + " + " + controls._WSAxis);
                 }
-                NetworkImplementor.IncomingMsg.RemoveAt(i);
             }
 
             //Network.Instance.IncomingMsg.Message.ReadBytes.
@@ -320,8 +316,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f;
-            float wuggySpeed = controls._WSAxis * -10;
+            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
+            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -335,8 +331,8 @@ namespace Fusee.Tutorial.Core
             // Wuggy Wheels
             _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
             _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -Keyboard.ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -Keyboard.ADAxis * 0.3f, 0);
+            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
+            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;

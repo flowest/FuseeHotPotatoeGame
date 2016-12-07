@@ -68,7 +68,7 @@
       <HintPath>$(FuseeRoot)bin\$(Configuration)\Libraries\Fusee.Base.Core.dll</HintPath>
     </Reference>
     <Reference Include="Fusee.Engine.Imp.Network.Desktop">
-      <HintPath>..\..\..\..\..\Fusee\bin\Debug\Libraries\Fusee.Engine.Imp.Network.Desktop.dll</HintPath>
+      <HintPath>$(FuseeRoot)bin\$(Configuration)\Libraries\Fusee.Engine.Imp.Network.Desktop.dll</HintPath>
     </Reference>
     <Reference Include="Fusee.Math.Core">
       <SpecificVersion>False</SpecificVersion>

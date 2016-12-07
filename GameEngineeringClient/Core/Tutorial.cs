@@ -326,8 +326,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = Keyboard.WSAxis * Keyboard.ADAxis * 0.03f;
-            float wuggySpeed = Keyboard.WSAxis * -10;
+            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
+            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -341,8 +341,8 @@ namespace Fusee.Tutorial.Core
             // Wuggy Wheels
             _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
             _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -Keyboard.ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -Keyboard.ADAxis * 0.3f, 0);
+            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
+            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
