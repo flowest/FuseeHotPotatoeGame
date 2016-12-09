@@ -1,0 +1,1 @@
+%~dp0\protobuf\PrecompileTool\precompile %~dp0\..\bin\Debug\NetworkHandler.dll -o:%~dp0\..\bin\Debug\NetworkHandlerSerializer.dll -t:NetworkHandlerSerializer
