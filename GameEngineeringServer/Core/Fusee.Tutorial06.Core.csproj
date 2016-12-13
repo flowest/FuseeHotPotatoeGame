@@ -76,6 +76,15 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(FuseeRoot)bin\$(Configuration)\Libraries\Fusee.Engine.Core.dll</HintPath>
     </Reference>
+    <Reference Include="NetworkHandler">
+      <HintPath>..\NetworkHandler\bin\Debug\NetworkHandler.dll</HintPath>
+    </Reference>
+    <Reference Include="NetworkHandlerSerializer">
+      <HintPath>..\NetworkHandler\bin\Debug\NetworkHandlerSerializer.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

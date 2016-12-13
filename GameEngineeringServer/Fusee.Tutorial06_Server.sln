@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fusee.Tutorial06.Core", "Core\Fusee.Tutorial06.Core.csproj", "{4E534FDD-A963-448D-B2A6-F3E8B9F0BF69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fusee.Tutorial06.Desktop", "Desktop\Fusee.Tutorial06.Desktop.csproj", "{A8C051C0-3A74-4976-9060-70E2A865D521}"
-	ProjectSection(ProjectDependencies) = postProject
-		{8A1599E1-E5D4-40F7-9388-D3551FDA1EAD} = {8A1599E1-E5D4-40F7-9388-D3551FDA1EAD}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fusee.Tutorial06.Web", "Web\Fusee.Tutorial06.Web.csproj", "{DB21584F-4EA6-486A-9BDB-77D372CF1D64}"
 EndProject
