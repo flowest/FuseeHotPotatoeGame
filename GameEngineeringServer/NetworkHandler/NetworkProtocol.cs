@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Fusee.Math.Core;
 using ProtoBuf;
 
 namespace NetworkHandler
@@ -14,6 +11,8 @@ namespace NetworkHandler
         public float _WSAxis { get; set; }
         [ProtoMember(2)]
         public float _ADAxis { get; set; }
+        [ProtoMember(3)]
+        public float3 _Position { get; set; }
     }
 
 }

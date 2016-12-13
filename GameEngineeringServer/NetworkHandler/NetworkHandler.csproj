@@ -47,14 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnimationTrackContainer.cs" />
-    <Compile Include="MaterialComponent.cs" />
-    <Compile Include="MeshComponent.cs" />
     <Compile Include="NetworkProtocol.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SceneComponentContainer.cs" />
-    <Compile Include="SceneNodeContainer.cs" />
-    <Compile Include="TransformComponent.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
