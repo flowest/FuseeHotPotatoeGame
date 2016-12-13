@@ -43,7 +43,6 @@
     <OutputRoot>$(ProjectBuildRoot)\bin\$(Configuration)\</OutputRoot>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ControlsForNetwork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tutorial.cs" />
   </ItemGroup>
@@ -75,6 +74,15 @@
     <Reference Include="Fusee.Engine.Core">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(FuseeRoot)bin\$(Configuration)\Libraries\Fusee.Engine.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NetworkHandler">
+      <HintPath>..\..\GameEngineeringServer\NetworkHandler\bin\Debug\NetworkHandler.dll</HintPath>
+    </Reference>
+    <Reference Include="NetworkHandlerSerializer">
+      <HintPath>..\..\GameEngineeringServer\NetworkHandler\bin\Debug\NetworkHandlerSerializer.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup />

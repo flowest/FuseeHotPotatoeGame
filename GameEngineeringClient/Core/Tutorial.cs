@@ -10,10 +10,13 @@ using Fusee.Engine.Core;
 using Fusee.Math.Core;
 using Fusee.Serialization;
 using Fusee.Xene;
+using NetworkHandler;
 using static System.Math;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
-
+using MaterialComponent = Fusee.Serialization.MaterialComponent;
+using SceneContainer = Fusee.Serialization.SceneContainer;
+using SceneNodeContainer = Fusee.Serialization.SceneNodeContainer;
 
 
 namespace Fusee.Tutorial.Core
@@ -182,9 +185,9 @@ namespace Fusee.Tutorial.Core
         private Renderer _renderer;
 
 
-        ControlsForNetwork controls = new ControlsForNetwork();
+        NetworkHandler.NetworkProtocol controls = new NetworkProtocol();
         MemoryStream memoryStream = new MemoryStream();
-        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+        NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
 
         // Init is called on startup. 
@@ -227,20 +230,13 @@ namespace Fusee.Tutorial.Core
 
         }
 
-        static byte[] GetBytes(string str)
-        {
-            byte[] bytes = new byte[str.Length * sizeof(char)];
-            System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
-
         private void getInputForNetwork()
         {
             memoryStream = new MemoryStream();
-            controls._ADAxis = Keyboard.ADAxis;
-            controls._WSAxis = Keyboard.WSAxis;
+            controls._ADValue = Keyboard.ADAxis;
+            controls._WSValue = Keyboard.WSAxis;
 
-            jsonSerializer.WriteObject(memoryStream, controls);
+            serializer.Serialize(memoryStream, controls);
             controlsByteArray = memoryStream.ToArray();
             
             Network.Instance.SendMessage(controlsByteArray, MessageDelivery.ReliableOrdered, 1);
@@ -326,8 +322,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
+            float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
+            float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -341,8 +337,8 @@ namespace Fusee.Tutorial.Core
             // Wuggy Wheels
             _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
             _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
+            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;

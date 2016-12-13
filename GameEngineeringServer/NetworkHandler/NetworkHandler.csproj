@@ -5,7 +5,7 @@
     <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FDEA1B91-9D10-4CF3-88E1-3B298A8FC9BE}</ProjectGuid>
+    <ProjectGuid>{8A1599E1-E5D4-40F7-9388-D3551FDA1EAD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NetworkHandler</RootNamespace>
@@ -48,10 +48,10 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Fusee.Math.Core">
-      <HintPath>..\..\..\..\FUSEE\bin\Debug\Libraries\Fusee.Math.Core.dll</HintPath>
+      <HintPath>$(FuseeRoot)bin\Debug\Libraries\Fusee.Math.Core.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
-      <HintPath>..\..\..\..\FUSEE\ext\protobuf\protobuf-net.dll</HintPath>
+      <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
