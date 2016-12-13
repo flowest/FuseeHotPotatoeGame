@@ -13,7 +13,7 @@ using Fusee.Xene;
 using static System.Math;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
-
+using NetworkHandler;
 
 
 namespace Fusee.Tutorial.Core
@@ -102,7 +102,7 @@ namespace Fusee.Tutorial.Core
             // RC.Render(LookupMesh(mesh));
         }
         [VisitMethod]
-        void OnMaterial(MaterialComponent material)
+        void OnMaterial(Fusee.Serialization.MaterialComponent material)
         {
             if (material.HasDiffuse)
             {
@@ -163,7 +163,7 @@ namespace Fusee.Tutorial.Core
         private const float RotationSpeed = 7;
         private const float Damping = 0.8f;
 
-        private SceneContainer _scene;
+        private Fusee.Serialization.SceneContainer _scene;
         private float4x4 _sceneCenter;
         private float4x4 _sceneScale;
         private float4x4 _projection;
@@ -177,14 +177,14 @@ namespace Fusee.Tutorial.Core
         private TransformComponent _wgyWheelSmallR;
         private TransformComponent _wgyWheelSmallL;
         private TransformComponent _wgyNeckHi;
-        private List<SceneNodeContainer> _trees;
+        private List<Fusee.Serialization.SceneNodeContainer> _trees;
 
         private Renderer _renderer;
 
-        System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
-        ControlsForNetwork controls = new ControlsForNetwork();
+        
+        NetworkHandler.NetworkProtocol controls = new NetworkHandler.NetworkProtocol();
         MemoryStream memoryStream = new MemoryStream();
-        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+        NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
 
 
 
@@ -192,7 +192,7 @@ namespace Fusee.Tutorial.Core
         public override void Init()
         {
             // Load the scene
-            _scene = AssetStorage.Get<SceneContainer>("WuggyLand.fus");
+            _scene = AssetStorage.Get<Fusee.Serialization.SceneContainer>("WuggyLand.fus");
             _sceneScale = float4x4.CreateScale(0.04f);
 
 
@@ -208,7 +208,7 @@ namespace Fusee.Tutorial.Core
             _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
 
             // Find the trees and store them in a list
-            _trees = new List<SceneNodeContainer>();
+            _trees = new List<Fusee.Serialization.SceneNodeContainer>();
             _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
 
             // Set the clear color for the backbuffer
@@ -217,8 +217,7 @@ namespace Fusee.Tutorial.Core
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Server;
             netCon.StartPeer();
-
-            customCulture.NumberFormat.NumberDecimalSeparator = ",";
+         
 
             //netCon.Config.ConnectOnDiscovery = true;
             //netCon.Config.Discovery = true;
@@ -249,8 +248,8 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    controls = (ControlsForNetwork) jsonSerializer.ReadObject(memoryStream);
-                    System.Diagnostics.Debug.WriteLine(controls._ADAxis + " + " + controls._WSAxis);
+                    controls = (NetworkProtocol) serializer.Deserialize(memoryStream,null,typeof(NetworkProtocol));
+                    System.Diagnostics.Debug.WriteLine(controls._ADValue + " + " + controls._WSValue);
                 }
             }
 
@@ -316,8 +315,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
+            float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
+            float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -331,12 +330,12 @@ namespace Fusee.Tutorial.Core
             // Wuggy Wheels
             _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
             _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
+            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
-            SceneNodeContainer target = GetClosest();
+            Fusee.Serialization.SceneNodeContainer target = GetClosest();
             float camYaw = 0;
             if (target != null)
             {
@@ -389,10 +388,10 @@ namespace Fusee.Tutorial.Core
 
         }
 
-        private SceneNodeContainer GetClosest()
+        private Fusee.Serialization.SceneNodeContainer GetClosest()
         {
             float minDist = float.MaxValue;
-            SceneNodeContainer ret = null;
+            Fusee.Serialization.SceneNodeContainer ret = null;
             foreach (var target in _trees)
             {
                 var xf = target.GetTransform();
