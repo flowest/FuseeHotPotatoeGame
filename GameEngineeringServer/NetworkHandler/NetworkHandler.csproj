@@ -5,7 +5,7 @@
     <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8A1599E1-E5D4-40F7-9388-D3551FDA1EAD}</ProjectGuid>
+    <ProjectGuid>{FDEA1B91-9D10-4CF3-88E1-3B298A8FC9BE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NetworkHandler</RootNamespace>
