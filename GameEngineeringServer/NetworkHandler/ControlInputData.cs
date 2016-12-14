@@ -1,9 +1,10 @@
-﻿using ProtoBuf;
+﻿using Fusee.Math.Core;
+using ProtoBuf;
 
 namespace NetworkHandler
 {
     [ProtoContract]
-    public class NetworkProtocol
+    public class ControlInputData
     {
         [ProtoMember(1)]
         public float _WSValue { get; set; }

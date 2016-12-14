@@ -185,7 +185,8 @@ namespace Fusee.Tutorial.Core
         private Renderer _renderer;
 
 
-        NetworkHandler.NetworkProtocol controls = new NetworkProtocol();
+        NetworkHandler.ControlInputData controls = new ControlInputData();
+        SynchronizationData synchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
@@ -238,15 +239,38 @@ namespace Fusee.Tutorial.Core
 
             serializer.Serialize(memoryStream, controls);
             controlsByteArray = memoryStream.ToArray();
-            
+
             Network.Instance.SendMessage(controlsByteArray, MessageDelivery.ReliableOrdered, 1);
             memoryStream.Dispose();
+        }
+
+        private void getSynchronizationDataFromServer()
+        {
+            INetworkMsg msg;
+
+            while ((msg = Network.Instance.IncomingMsg) != null)
+            {
+                if (msg.Type == MessageType.Data)
+                {
+                    memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                    synchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
+                    System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationData._Translation);
+                }
+            }
+        }
+
+        private void synchronizeWuggyWithServer()
+        {
+            _wuggyTransform.Rotation = synchronizationData._Rotation;
+            _wuggyTransform.Translation = synchronizationData._Translation;
         }
 
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
             getInputForNetwork();
+            getSynchronizationDataFromServer();
+            synchronizeWuggyWithServer();
 
             if (Keyboard.IsKeyDown(KeyCodes.A))
             {

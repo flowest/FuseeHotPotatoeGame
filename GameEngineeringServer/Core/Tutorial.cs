@@ -181,10 +181,13 @@ namespace Fusee.Tutorial.Core
 
         private Renderer _renderer;
 
-        
-        NetworkHandler.NetworkProtocol controls = new NetworkHandler.NetworkProtocol();
+
+        NetworkHandler.ControlInputData controls = new NetworkHandler.ControlInputData();
+        SynchronizationData synchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
+
+        private byte[] synchonizeDataByteArray;
 
 
 
@@ -217,29 +220,25 @@ namespace Fusee.Tutorial.Core
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Server;
             netCon.StartPeer();
-         
 
-            //netCon.Config.ConnectOnDiscovery = true;
-            //netCon.Config.Discovery = true;
-            //netCon.SendDiscoveryMessage();
-
-
-
-            // netCon.Config.SysType = SysType.Peer;
-            // netCon.StartPeer(1337);
-            // System.Diagnostics.Debug.WriteLine(netCon.IncomingMsg);
 
         }
 
-        static string GetString(byte[] bytes)
+        private void sendSynchronizeDataToClient()
         {
-            char[] chars = new char[bytes.Length / sizeof(char)];
-            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            return new string(chars);
+            memoryStream = new MemoryStream();
+            synchronizationData._Translation = _wuggyTransform.Translation;
+            synchronizationData._Rotation = _wuggyTransform.Rotation;
+
+
+            serializer.Serialize(memoryStream, synchronizationData);
+            synchonizeDataByteArray = memoryStream.ToArray();
+
+            Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 1);
+            memoryStream.Dispose();
         }
 
-        // RenderAFrame is called once a frame
-        public override void RenderAFrame()
+        private void getInputDataFromClient()
         {
             INetworkMsg msg;
 
@@ -248,10 +247,17 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    controls = (NetworkProtocol) serializer.Deserialize(memoryStream,null,typeof(NetworkProtocol));
+                    controls = (ControlInputData)serializer.Deserialize(memoryStream, null, typeof(ControlInputData));
                     System.Diagnostics.Debug.WriteLine(controls._ADValue + " + " + controls._WSValue);
                 }
             }
+        }
+
+
+        // RenderAFrame is called once a frame
+        public override void RenderAFrame()
+        {
+            getInputDataFromClient();
 
             //Network.Instance.IncomingMsg.Message.ReadBytes.
             // Clear the backbuffer
@@ -386,7 +392,10 @@ namespace Fusee.Tutorial.Core
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
 
+            sendSynchronizeDataToClient();
+
         }
+
 
         private Fusee.Serialization.SceneNodeContainer GetClosest()
         {
