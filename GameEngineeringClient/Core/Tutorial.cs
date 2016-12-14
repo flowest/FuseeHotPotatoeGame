@@ -194,6 +194,8 @@ namespace Fusee.Tutorial.Core
 
         private long LongLocalIP;
 
+        private List<ForeignWuggy> foreignWuggys = new List<ForeignWuggy>();
+
         // Init is called on startup. 
         public override void Init()
         {
@@ -264,7 +266,14 @@ namespace Fusee.Tutorial.Core
                     }
                     else
                     {
-                        throw new NotImplementedException("Hier werden später die anderen Wuggys gerendert");
+                        if (foreignWuggys.All(foreignWuggy => foreignWuggy._remoteIpAdress != synchronizationData._RemoteIPAdress))
+                        {
+                            foreignWuggys.Add(new ForeignWuggy(synchronizationData._RemoteIPAdress));
+                        }
+                        else
+                        {
+                            foreignWuggys.First(foreignWuggy => foreignWuggy._remoteIpAdress == synchronizationData._RemoteIPAdress).updateTransform(synchronizationData);
+                        }
                     }
                 }
             }
@@ -426,6 +435,11 @@ namespace Fusee.Tutorial.Core
 
 
             _renderer.Traverse(_scene.Children);
+
+            foreach (var foreignWuggy in foreignWuggys)
+            {
+                _renderer.Traverse(foreignWuggy._sceneContainer.Children);
+            }
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
