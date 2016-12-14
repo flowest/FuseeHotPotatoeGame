@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -191,6 +192,8 @@ namespace Fusee.Tutorial.Core
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
 
+        private long LongLocalIP;
+
         // Init is called on startup. 
         public override void Init()
         {
@@ -226,9 +229,9 @@ namespace Fusee.Tutorial.Core
             //netCon.SendDiscoveryMessage();
             // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
-            netCon.OpenConnection("127.0.0.1");
+            netCon.OpenConnection("192.168.2.110");
 
-
+            LongLocalIP = IP2Long(NetworkImplementor.GetLocalIp());
         }
 
         private void getInputForNetwork()
@@ -254,7 +257,15 @@ namespace Fusee.Tutorial.Core
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
                     synchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
-                    System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationData._Translation);
+                    //System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationData._Translation);
+                    if (synchronizationData._RemoteIPAdress == LongLocalIP)
+                    {
+                        synchronizeWuggyWithServer();
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Hier werden später die anderen Wuggys gerendert");
+                    }
                 }
             }
         }
@@ -265,25 +276,27 @@ namespace Fusee.Tutorial.Core
             _wuggyTransform.Translation = synchronizationData._Translation;
         }
 
+        public static long IP2Long(string ip)
+        {
+            string[] ipBytes;
+            double num = 0;
+            if (!string.IsNullOrEmpty(ip))
+            {
+                ipBytes = ip.Split('.');
+                for (int i = ipBytes.Length - 1; i >= 0; i--)
+                {
+                    num += ((int.Parse(ipBytes[i]) % 256) * System.Math.Pow(256, (3 - i)));
+                }
+            }
+            return (long)num;
+        }
+
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
             getInputForNetwork();
             getSynchronizationDataFromServer();
-            synchronizeWuggyWithServer();
 
-            if (Keyboard.IsKeyDown(KeyCodes.A))
-            {
-                //Network.Instance.SendMessage(GetBytes("A is pressed!"), MessageDelivery.ReliableOrdered, 1);
-
-            }
-
-            //if (Keyboard.IsKeyDown(KeyCodes.W))
-            //{
-            //    Network.Instance.SendMessage(GetBytes("W is pressed!"), MessageDelivery.ReliableOrdered, 1);
-            //}
-
-            //Network.Instance.SendMessage(GetBytes(Keyboard.WSAxis.ToString()), MessageDelivery.ReliableOrdered, 1);
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);

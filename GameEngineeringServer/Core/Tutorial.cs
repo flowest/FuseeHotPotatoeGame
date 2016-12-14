@@ -163,7 +163,7 @@ namespace Fusee.Tutorial.Core
         private const float RotationSpeed = 7;
         private const float Damping = 0.8f;
 
-        private Fusee.Serialization.SceneContainer _scene;
+        //private Fusee.Serialization.SceneContainer _scene;
         private float4x4 _sceneCenter;
         private float4x4 _sceneScale;
         private float4x4 _projection;
@@ -171,48 +171,37 @@ namespace Fusee.Tutorial.Core
 
         private bool _keys;
 
-        private TransformComponent _wuggyTransform;
-        private TransformComponent _wgyWheelBigR;
-        private TransformComponent _wgyWheelBigL;
-        private TransformComponent _wgyWheelSmallR;
-        private TransformComponent _wgyWheelSmallL;
-        private TransformComponent _wgyNeckHi;
-        private List<Fusee.Serialization.SceneNodeContainer> _trees;
+        //private TransformComponent _wuggyTransform;
+        //private TransformComponent _wgyWheelBigR;
+        //private TransformComponent _wgyWheelBigL;
+        //private TransformComponent _wgyWheelSmallR;
+        //private TransformComponent _wgyWheelSmallL;
+        //private TransformComponent _wgyNeckHi;
+        //private List<Fusee.Serialization.SceneNodeContainer> _trees;
 
         private Renderer _renderer;
 
-
-        NetworkHandler.ControlInputData controls = new NetworkHandler.ControlInputData();
-        SynchronizationData synchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
 
         private byte[] synchonizeDataByteArray;
+
+        private List<ClientWuggy> connectedClients = new List<ClientWuggy>();
+
 
 
 
         // Init is called on startup. 
         public override void Init()
         {
-            // Load the scene
-            _scene = AssetStorage.Get<Fusee.Serialization.SceneContainer>("WuggyLand.fus");
+
             _sceneScale = float4x4.CreateScale(0.04f);
 
 
             // Instantiate our self-written renderer
             _renderer = new Renderer(RC);
 
-            // Find some transform nodes we want to manipulate in the scene
-            _wuggyTransform = _scene.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
-            _wgyWheelBigR = _scene.Children.FindNodes(c => c.Name == "WheelBigR").First()?.GetTransform();
-            _wgyWheelBigL = _scene.Children.FindNodes(c => c.Name == "WheelBigL").First()?.GetTransform();
-            _wgyWheelSmallR = _scene.Children.FindNodes(c => c.Name == "WheelSmallR").First()?.GetTransform();
-            _wgyWheelSmallL = _scene.Children.FindNodes(c => c.Name == "WheelSmallL").First()?.GetTransform();
-            _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
 
-            // Find the trees and store them in a list
-            _trees = new List<Fusee.Serialization.SceneNodeContainer>();
-            _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
 
             // Set the clear color for the backbuffer
             RC.ClearColor = new float4(1, 1, 1, 1);
@@ -224,21 +213,18 @@ namespace Fusee.Tutorial.Core
 
         }
 
-        private void sendSynchronizeDataToClient()
+        private void sendSynchronizeDataToClients(ClientWuggy connectedClient)
         {
             memoryStream = new MemoryStream();
-            synchronizationData._Translation = _wuggyTransform.Translation;
-            synchronizationData._Rotation = _wuggyTransform.Rotation;
-
-
-            serializer.Serialize(memoryStream, synchronizationData);
+            
+            serializer.Serialize(memoryStream, connectedClient.synchronizationData);
             synchonizeDataByteArray = memoryStream.ToArray();
 
             Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 1);
             memoryStream.Dispose();
         }
 
-        private void getInputDataFromClient()
+        private void getInputDataFromClients()
         {
             INetworkMsg msg;
 
@@ -247,50 +233,48 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    controls = (ControlInputData)serializer.Deserialize(memoryStream, null, typeof(ControlInputData));
-                    System.Diagnostics.Debug.WriteLine(controls._ADValue + " + " + controls._WSValue);
+                    ControlInputData controls = (ControlInputData)serializer.Deserialize(memoryStream, null, typeof(ControlInputData));
+
+                    connectedClients.First(client => client.RemoteEndpoint.Address == msg.Sender.RemoteEndPoint.Address)._controlData = controls;
                 }
+
+                
             }
         }
 
+        private void calculateClientWuggyPositions()
+        {
+            foreach (var connectedClient in connectedClients)
+            {
+                connectedClient.calculatePosition(DeltaTime);
+                sendSynchronizeDataToClients(connectedClient);
+            }
+        }
+
+        private void handleConnections(ConnectionStatus estatus, INetworkConnection connection)
+        {
+            if (estatus == ConnectionStatus.Connected && connectedClients.All(connectedClient => connectedClient.RemoteEndpoint.Address != connection.RemoteEndPoint.Address))
+            {
+                connectedClients.Add(new ClientWuggy(connection.RemoteEndPoint));
+            }
+
+            else if (estatus == ConnectionStatus.Disconnected)
+            {
+                connectedClients.RemoveAll(client => client.RemoteEndpoint.Address == connection.RemoteEndPoint.Address);
+            }
+        }
 
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
-            getInputDataFromClient();
+            Network.Instance.OnConnectionUpdate += handleConnections;
+            getInputDataFromClients();
+            calculateClientWuggyPositions();
 
-            //Network.Instance.IncomingMsg.Message.ReadBytes.
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
 
-            // Mouse and keyboard movement
-            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-            {
-                _keys = true;
-            }
 
-            var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-
-            // Zoom & Roll
-            if (Touch.TwoPoint)
-            {
-                if (!_twoTouchRepeated)
-                {
-                    _twoTouchRepeated = true;
-                    _angleRollInit = Touch.TwoPointAngle - _angleRoll;
-                    _offsetInit = Touch.TwoPointMidPoint - _offset;
-                }
-                _zoomVel = Touch.TwoPointDistanceVel * -0.01f;
-                _angleRoll = Touch.TwoPointAngle - _angleRollInit;
-                _offset = Touch.TwoPointMidPoint - _offsetInit;
-            }
-            else
-            {
-                _twoTouchRepeated = false;
-                _zoomVel = Mouse.WheelVel * -0.5f;
-                _angleRoll *= curDamp * 0.8f;
-                _offset *= curDamp * 0.8f;
-            }
 
             // UpDown / LeftRight rotation
             if (Mouse.LeftButton)
@@ -314,50 +298,10 @@ namespace Fusee.Tutorial.Core
                     _angleVelHorz = -RotationSpeed * Keyboard.LeftRightAxis * 0.002f;
                     _angleVelVert = -RotationSpeed * Keyboard.UpDownAxis * 0.002f;
                 }
-                else
-                {
-                    _angleVelHorz *= curDamp;
-                    _angleVelVert *= curDamp;
-                }
             }
 
-            float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
-
-            // Wuggy XForm
-            float wuggyYaw = _wuggyTransform.Rotation.y;
-            wuggyYaw += wuggyYawSpeed;
-            wuggyYaw = NormRot(wuggyYaw);
-            float3 wuggyPos = _wuggyTransform.Translation;
-            wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
-            _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
-            _wuggyTransform.Translation = wuggyPos;
-
-            // Wuggy Wheels
-            _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
-
-            // SCRATCH:
-            // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
-            Fusee.Serialization.SceneNodeContainer target = GetClosest();
-            float camYaw = 0;
-            if (target != null)
-            {
-                float3 delta = target.GetTransform().Translation - _wuggyTransform.Translation;
-                camYaw = (float)Atan2(-delta.x, -delta.z) - _wuggyTransform.Rotation.y;
-            }
-
-            camYaw = NormRot(camYaw);
-            float deltaAngle = camYaw - _wgyNeckHi.Rotation.y;
-            if (deltaAngle > M.Pi)
-                deltaAngle = deltaAngle - M.TwoPi;
-            if (deltaAngle < -M.Pi)
-                deltaAngle = deltaAngle + M.TwoPi; ;
-            var newYaw = _wgyNeckHi.Rotation.y + (float)M.Clamp(deltaAngle, -0.06, 0.06);
-            newYaw = NormRot(newYaw);
-            _wgyNeckHi.Rotation = new float3(0, newYaw, 0);
+            //float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
+            //float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
 
 
             _zoom += _zoomVel;
@@ -386,32 +330,15 @@ namespace Fusee.Tutorial.Core
             var mtxOffset = float4x4.CreateTranslation(2 * _offset.x / Width, -2 * _offset.y / Height, 0);
             RC.Projection = mtxOffset * _projection;
 
-
-            _renderer.Traverse(_scene.Children);
+            foreach (var connectedClient in connectedClients)
+            {
+                _renderer.Traverse(connectedClient._sceneContainer.Children);
+            }
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
+            
 
-            sendSynchronizeDataToClient();
-
-        }
-
-
-        private Fusee.Serialization.SceneNodeContainer GetClosest()
-        {
-            float minDist = float.MaxValue;
-            Fusee.Serialization.SceneNodeContainer ret = null;
-            foreach (var target in _trees)
-            {
-                var xf = target.GetTransform();
-                float dist = (_wuggyTransform.Translation - xf.Translation).Length;
-                if (dist < minDist && dist < 1000)
-                {
-                    ret = target;
-                    minDist = dist;
-                }
-            }
-            return ret;
         }
 
         public static float NormRot(float rot)
@@ -422,8 +349,6 @@ namespace Fusee.Tutorial.Core
                 rot += M.TwoPi;
             return rot;
         }
-
-
 
         // Is called when the window was resized
         public override void Resize()
