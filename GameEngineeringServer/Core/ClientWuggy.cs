@@ -19,7 +19,7 @@ namespace Fusee.Tutorial.Core
 
         public SceneContainer _sceneContainer;
         public TransformComponent _wuggyTransform;
-        public ControlInputData _controlData;
+        public ControlInputData _controlData = new ControlInputData();
 
         public SynchronizationData synchronizationData = new SynchronizationData();
 
