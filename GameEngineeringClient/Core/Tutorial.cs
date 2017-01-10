@@ -186,15 +186,16 @@ namespace Fusee.Tutorial.Core
         private Renderer _renderer;
 
 
-        NetworkHandler.ControlInputData controls = new ControlInputData();
-        SynchronizationData synchronizationData = new SynchronizationData();
+        SynchronizationData synchronizationDataForServer = new SynchronizationData { _InputData = new ControlInputData(), _RemoteIPAdress = 0, _TransformationData = new TransformationData() };
+        List<SynchronizationData> syncListFromServer = new List<SynchronizationData>();
+        List<ForeignWuggy> foreignWuggys = new List<ForeignWuggy>();
         MemoryStream memoryStream = new MemoryStream();
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
 
         private long LongLocalIP;
 
-        private List<ForeignWuggy> foreignWuggys = new List<ForeignWuggy>();
+        //private List<ForeignWuggy> foreignWuggys = new List<ForeignWuggy>();
 
         // Init is called on startup. 
         public override void Init()
@@ -231,18 +232,19 @@ namespace Fusee.Tutorial.Core
             //netCon.SendDiscoveryMessage();
             // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
-            netCon.OpenConnection("192.168.2.110");
+            netCon.OpenConnection("141.28.134.60");
 
             LongLocalIP = IP2Long(NetworkImplementor.GetLocalIp());
+            synchronizationDataForServer._RemoteIPAdress = LongLocalIP;
         }
 
         private void getInputForNetwork()
         {
             memoryStream = new MemoryStream();
-            controls._ADValue = Keyboard.ADAxis;
-            controls._WSValue = Keyboard.WSAxis;
+            synchronizationDataForServer._InputData._ADValue = Keyboard.ADAxis;
+            synchronizationDataForServer._InputData._WSValue = Keyboard.WSAxis;
 
-            serializer.Serialize(memoryStream, controls);
+            serializer.Serialize(memoryStream, synchronizationDataForServer);
             controlsByteArray = memoryStream.ToArray();
 
             Network.Instance.SendMessage(controlsByteArray, MessageDelivery.ReliableOrdered, 1);
@@ -258,31 +260,66 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    synchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
-                    //System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationData._Translation);
-                    if (synchronizationData._RemoteIPAdress == LongLocalIP)
+                    syncListFromServer = (List<SynchronizationData>)serializer.Deserialize(memoryStream, null, typeof(List<SynchronizationData>));
+                    //System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationDataForServer._Translation);
+                    //if (synchronizationDataForServer._RemoteIPAdress == LongLocalIP)
+                    //{
+                    //    synchronizeWuggyWithServer();
+                    //}
+                    //else
+                    //{
+                    if (foreignWuggys.Count < syncListFromServer.Count)
                     {
-                        synchronizeWuggyWithServer();
+                        foreach (SynchronizationData synchronizationData in syncListFromServer)
+                        {
+                            if (synchronizationData._RemoteIPAdress != LongLocalIP)
+                            {
+                                if (foreignWuggys.FirstOrDefault(wuggy => wuggy._remoteIpAdress == synchronizationData._RemoteIPAdress) == null)
+                                {
+                                    foreignWuggys.Add(new ForeignWuggy(synchronizationData._RemoteIPAdress));
+                                }
+                            }
+
+                        }
                     }
-                    else
+                    else if (foreignWuggys.Count > syncListFromServer.Count)
                     {
-                        if (foreignWuggys.All(foreignWuggy => foreignWuggy._remoteIpAdress != synchronizationData._RemoteIPAdress))
+                        foreach (ForeignWuggy foreignWuggy in foreignWuggys)
                         {
-                            foreignWuggys.Add(new ForeignWuggy(synchronizationData._RemoteIPAdress));
-                        }
-                        else
-                        {
-                            foreignWuggys.First(foreignWuggy => foreignWuggy._remoteIpAdress == synchronizationData._RemoteIPAdress).updateTransform(synchronizationData);
+                            if (syncListFromServer.First(wuggyOnServer => wuggyOnServer._RemoteIPAdress == foreignWuggy._remoteIpAdress) == null)
+                            {
+                                foreignWuggys.Remove(foreignWuggy);
+                            }
                         }
                     }
+
+                    foreach (var foreignWuggy in foreignWuggys)
+                    {
+                        SynchronizationData currentWuggy = syncListFromServer.First(wuggy => wuggy._RemoteIPAdress == foreignWuggy._remoteIpAdress);
+                        foreignWuggy._wuggyTransform.Translation = currentWuggy._TransformationData._Translation;
+                        foreignWuggy._wuggyTransform.Rotation = currentWuggy._TransformationData._Rotation;
+                        foreignWuggy.inputData = currentWuggy._InputData;
+                    }
+                    
+                    synchronizeWuggyWithServer(syncListFromServer.First(wuggy => wuggy._RemoteIPAdress == LongLocalIP));
+
+                    //if (foreignWuggys.All(foreignWuggy => foreignWuggy._remoteIpAdress != synchronizationData._RemoteIPAdress))
+                    //{
+                    //    foreignWuggys.Add(new ForeignWuggy(synchronizationData._RemoteIPAdress));
+                    //}
+                    //else
+                    //{
+                    //    foreignWuggys.First(foreignWuggy => foreignWuggy._remoteIpAdress == synchronizationData._RemoteIPAdress).updateTransform(synchronizationDataForServer);
+                    //}
+                    // }
                 }
             }
         }
 
-        private void synchronizeWuggyWithServer()
+        private void synchronizeWuggyWithServer(SynchronizationData personalSyncData)
         {
-            _wuggyTransform.Rotation = synchronizationData._Rotation;
-            _wuggyTransform.Translation = synchronizationData._Translation;
+            _wuggyTransform.Rotation = personalSyncData._TransformationData._Rotation;
+            _wuggyTransform.Translation = personalSyncData._TransformationData._Translation;
         }
 
         public static long IP2Long(string ip)
@@ -368,8 +405,8 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
+            float wuggyYawSpeed = synchronizationDataForServer._InputData._WSValue * synchronizationDataForServer._InputData._ADValue * 0.03f * DeltaTime * 50;
+            float wuggySpeed = synchronizationDataForServer._InputData._WSValue * -10 * DeltaTime * 50;
 
             // Wuggy XForm
             float wuggyYaw = _wuggyTransform.Rotation.y;
@@ -383,8 +420,8 @@ namespace Fusee.Tutorial.Core
             // Wuggy Wheels
             _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
             _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -synchronizationDataForServer._InputData._ADValue * 0.3f, 0);
+            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -synchronizationDataForServer._InputData._ADValue * 0.3f, 0);
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;

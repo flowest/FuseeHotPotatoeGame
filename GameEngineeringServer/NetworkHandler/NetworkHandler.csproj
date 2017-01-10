@@ -37,6 +37,7 @@
     <Compile Include="ControlInputData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SynchronizationData.cs" />
+    <Compile Include="TransformationData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Fusee.Engine.Common">

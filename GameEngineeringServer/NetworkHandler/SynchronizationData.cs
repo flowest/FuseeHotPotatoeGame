@@ -8,10 +8,10 @@ namespace NetworkHandler
     public class SynchronizationData
     {
         [ProtoMember(1)]
-        public float3 _Translation { get; set; }
+        public TransformationData _TransformationData { get; set; }
         [ProtoMember(2)]
-        public float3 _Rotation { get; set; }
-        [ProtoMember(3)]
         public long _RemoteIPAdress { get; set; }
+        [ProtoMember(3)]
+        public ControlInputData _InputData { get; set; }
     }
 }

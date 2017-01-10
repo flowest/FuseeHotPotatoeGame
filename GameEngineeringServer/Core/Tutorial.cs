@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -186,7 +187,7 @@ namespace Fusee.Tutorial.Core
 
         private byte[] synchonizeDataByteArray;
 
-        private List<ClientWuggy> connectedClients = new List<ClientWuggy>();
+        private List<SynchronizationData> connectedClients = new List<SynchronizationData>();
 
 
 
@@ -213,11 +214,11 @@ namespace Fusee.Tutorial.Core
 
         }
 
-        private void sendSynchronizeDataToClients(ClientWuggy connectedClient)
+        private void sendSynchronizeDataToClients(List<SynchronizationData> connectedClientList)
         {
             memoryStream = new MemoryStream();
             
-            serializer.Serialize(memoryStream, connectedClient.synchronizationData);
+            serializer.Serialize(memoryStream, connectedClientList);
             synchonizeDataByteArray = memoryStream.ToArray();
 
             Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 1);
@@ -233,9 +234,9 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    ControlInputData controls = (ControlInputData)serializer.Deserialize(memoryStream, null, typeof(ControlInputData));
+                    SynchronizationData clientSyncData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
 
-                    connectedClients.First(client => client.RemoteEndpoint.Address == msg.Sender.RemoteEndPoint.Address)._controlData = controls;
+                    connectedClients.First(client => client._RemoteIPAdress == msg.Sender.RemoteEndPoint.Address)._InputData = clientSyncData._InputData;
                 }
 
                 
@@ -246,21 +247,42 @@ namespace Fusee.Tutorial.Core
         {
             foreach (var connectedClient in connectedClients)
             {
-                connectedClient.calculatePosition(DeltaTime);
-                sendSynchronizeDataToClients(connectedClient);
+                connectedClient._TransformationData = calculatePosition(connectedClient,DeltaTime);
             }
+            sendSynchronizeDataToClients(connectedClients);
+        }
+
+        public TransformationData calculatePosition(SynchronizationData _syncData, float deltaTime)
+        {
+            float wuggyYawSpeed = _syncData._InputData._WSValue * _syncData._InputData._ADValue * 0.03f * deltaTime * 50;
+            float wuggySpeed = _syncData._InputData._WSValue * -10 * deltaTime * 50;
+
+            float wuggyYaw = _syncData._TransformationData._Rotation.y;
+            wuggyYaw += wuggyYawSpeed;
+            wuggyYaw = NormRot(wuggyYaw);
+            float3 wuggyPos = _syncData._TransformationData._Translation;
+            wuggyPos += new float3((float)System.Math.Sin(wuggyYaw), 0, (float)System.Math.Cos(wuggyYaw)) * wuggySpeed;
+            _syncData._TransformationData._Rotation = new float3(0, wuggyYaw, 0);
+            _syncData._TransformationData._Translation = wuggyPos;
+
+            Debug.WriteLine(_syncData._TransformationData._Rotation + " "+ _syncData._TransformationData._Translation);
+            return new TransformationData
+            {
+                _Rotation = _syncData._TransformationData._Rotation,
+                _Translation = _syncData._TransformationData._Translation,
+            };
         }
 
         private void handleConnections(ConnectionStatus estatus, INetworkConnection connection)
         {
-            if (estatus == ConnectionStatus.Connected && connectedClients.All(connectedClient => connectedClient.RemoteEndpoint.Address != connection.RemoteEndPoint.Address))
+            if (estatus == ConnectionStatus.Connected && connectedClients.All(connectedClient => connectedClient._RemoteIPAdress != connection.RemoteEndPoint.Address))
             {
-                connectedClients.Add(new ClientWuggy(connection.RemoteEndPoint));
+                connectedClients.Add(new SynchronizationData { _RemoteIPAdress = connection.RemoteEndPoint.Address, _InputData = new ControlInputData(),_TransformationData = new TransformationData()});
             }
 
             else if (estatus == ConnectionStatus.Disconnected)
             {
-                connectedClients.RemoveAll(client => client.RemoteEndpoint.Address == connection.RemoteEndPoint.Address);
+                connectedClients.RemoveAll(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
             }
         }
 
@@ -330,14 +352,11 @@ namespace Fusee.Tutorial.Core
             var mtxOffset = float4x4.CreateTranslation(2 * _offset.x / Width, -2 * _offset.y / Height, 0);
             RC.Projection = mtxOffset * _projection;
 
-            foreach (var connectedClient in connectedClients)
-            {
-                _renderer.Traverse(connectedClient._sceneContainer.Children);
-            }
+
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
-            
+
 
         }
 
