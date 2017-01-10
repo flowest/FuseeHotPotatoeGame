@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -293,15 +294,18 @@ namespace Fusee.Tutorial.Core
                         }
                     }
 
-                    foreach (var foreignWuggy in foreignWuggys)
+                    else if(foreignWuggys.Count == syncListFromServer.Count)
                     {
-                        SynchronizationData currentWuggy = syncListFromServer.First(wuggy => wuggy._RemoteIPAdress == foreignWuggy._remoteIpAdress);
-                        foreignWuggy._wuggyTransform.Translation = currentWuggy._TransformationData._Translation;
-                        foreignWuggy._wuggyTransform.Rotation = currentWuggy._TransformationData._Rotation;
-                        foreignWuggy.inputData = currentWuggy._InputData;
+                        foreach (var foreignWuggy in foreignWuggys)
+                        {
+                            SynchronizationData currentWuggy = syncListFromServer.First(wuggy => wuggy._RemoteIPAdress == foreignWuggy._remoteIpAdress);
+                            foreignWuggy._wuggyTransform.Translation = currentWuggy._TransformationData._Translation;
+                            foreignWuggy._wuggyTransform.Rotation = currentWuggy._TransformationData._Rotation;
+                            foreignWuggy.inputData = currentWuggy._InputData;
+                        } 
                     }
                     
-                    synchronizeWuggyWithServer(syncListFromServer.First(wuggy => wuggy._RemoteIPAdress == LongLocalIP));
+                    synchronizeWuggyWithServer(syncListFromServer.FirstOrDefault(wuggy => wuggy._RemoteIPAdress == LongLocalIP));
 
                     //if (foreignWuggys.All(foreignWuggy => foreignWuggy._remoteIpAdress != synchronizationData._RemoteIPAdress))
                     //{
@@ -318,8 +322,12 @@ namespace Fusee.Tutorial.Core
 
         private void synchronizeWuggyWithServer(SynchronizationData personalSyncData)
         {
-            _wuggyTransform.Rotation = personalSyncData._TransformationData._Rotation;
-            _wuggyTransform.Translation = personalSyncData._TransformationData._Translation;
+            if (personalSyncData != null)
+            {
+
+                _wuggyTransform.Rotation = personalSyncData._TransformationData._Rotation;
+                _wuggyTransform.Translation = personalSyncData._TransformationData._Translation; 
+            }
         }
 
         public static long IP2Long(string ip)
@@ -342,6 +350,8 @@ namespace Fusee.Tutorial.Core
         {
             getInputForNetwork();
             getSynchronizationDataFromServer();
+
+            Debug.WriteLine(syncListFromServer.Count);
 
 
             // Clear the backbuffer
