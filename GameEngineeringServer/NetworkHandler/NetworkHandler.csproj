@@ -35,6 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ControlInputData.cs" />
+    <Compile Include="DisconnectData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SynchronizationData.cs" />
   </ItemGroup>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -252,25 +253,40 @@ namespace Fusee.Tutorial.Core
 
             while ((msg = Network.Instance.IncomingMsg) != null)
             {
+               
                 if (msg.Type == MessageType.Data)
                 {
-                    memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    recievedSynchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
-                    //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
-                    if (recievedSynchronizationData._RemoteIPAdress == LongLocalIP)
+                    Debug.WriteLine(msg.Message.MsgChannel);
+                    switch (msg.Message.MsgChannel)
                     {
-                        synchronizeWuggyWithServer(recievedSynchronizationData);
-                    }
-                    else
-                    {
-                        if (foreignWuggys.All(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress != recievedSynchronizationData._RemoteIPAdress))
-                        {
-                            foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData._RemoteIPAdress));
-                        }
-                        else
-                        {
-                            foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress).updateTransform(recievedSynchronizationData);
-                        }
+                        case 0:
+                            memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                            recievedSynchronizationData = (SynchronizationData) serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
+                            //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
+                            if (recievedSynchronizationData._RemoteIPAdress == LongLocalIP)
+                            {
+                                synchronizeWuggyWithServer(recievedSynchronizationData);
+                            }
+                            else
+                            {
+                                if (
+                                    foreignWuggys.All(foreignWuggy =>foreignWuggy._connectedPlayerSyncData._RemoteIPAdress !=recievedSynchronizationData._RemoteIPAdress))
+                                {
+                                    foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData._RemoteIPAdress));
+                                }
+                                else
+                                {
+                                    foreignWuggys.First(foreignWuggy =>foreignWuggy._connectedPlayerSyncData._RemoteIPAdress ==recievedSynchronizationData._RemoteIPAdress).updateTransform(recievedSynchronizationData);
+                                }
+                            }
+
+                            break;
+
+                        case 2:
+                            memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                            DisconnectData disconnectData =(DisconnectData)serializer.Deserialize(memoryStream, null, typeof(DisconnectData));
+                            Debug.WriteLine("Client Disconnect:" + disconnectData.disconnectedIP);
+                            break;
                     }
                 }
             }

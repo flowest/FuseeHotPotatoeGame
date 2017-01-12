@@ -270,8 +270,21 @@ namespace Fusee.Tutorial.Core
 
             else if (estatus == ConnectionStatus.Disconnected)
             {
+                sendDisconnectMessageToClients(connection.RemoteEndPoint.Address);
                 connectedClients.RemoveAll(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
+                
             }
+        }
+
+        private void sendDisconnectMessageToClients(long _disconnectedIP)
+        {
+            memoryStream = new MemoryStream();
+
+            serializer.Serialize(memoryStream, new DisconnectData {disconnectedIP = _disconnectedIP});
+            synchonizeDataByteArray = memoryStream.ToArray();
+
+            Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 2);
+            memoryStream.Dispose();
         }
 
         // RenderAFrame is called once a frame
