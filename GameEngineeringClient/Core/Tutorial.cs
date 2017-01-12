@@ -15,9 +15,6 @@ using NetworkHandler;
 using static System.Math;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
-using MaterialComponent = Fusee.Serialization.MaterialComponent;
-using SceneContainer = Fusee.Serialization.SceneContainer;
-using SceneNodeContainer = Fusee.Serialization.SceneNodeContainer;
 
 
 namespace Fusee.Tutorial.Core
@@ -187,7 +184,7 @@ namespace Fusee.Tutorial.Core
 
 
         NetworkHandler.ControlInputData controls = new ControlInputData();
-        SynchronizationData synchronizationData = new SynchronizationData();
+        SynchronizationData recievedSynchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
         NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
@@ -231,7 +228,7 @@ namespace Fusee.Tutorial.Core
             //netCon.SendDiscoveryMessage();
             // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
-            netCon.OpenConnection("192.168.2.110");
+            netCon.OpenConnection("192.168.1.25");
 
             LongLocalIP = IP2Long(NetworkImplementor.GetLocalIp());
         }
@@ -258,31 +255,31 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    synchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
-                    //System.Diagnostics.Debug.WriteLine(synchronizationData._Rotation + " + " + synchronizationData._Translation);
-                    if (synchronizationData._RemoteIPAdress == LongLocalIP)
+                    recievedSynchronizationData = (SynchronizationData)serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
+                    //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
+                    if (recievedSynchronizationData._RemoteIPAdress == LongLocalIP)
                     {
-                        synchronizeWuggyWithServer();
+                        synchronizeWuggyWithServer(recievedSynchronizationData);
                     }
                     else
                     {
-                        if (foreignWuggys.All(foreignWuggy => foreignWuggy._remoteIpAdress != synchronizationData._RemoteIPAdress))
+                        if (foreignWuggys.All(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress != recievedSynchronizationData._RemoteIPAdress))
                         {
-                            foreignWuggys.Add(new ForeignWuggy(synchronizationData._RemoteIPAdress));
+                            foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData._RemoteIPAdress));
                         }
                         else
                         {
-                            foreignWuggys.First(foreignWuggy => foreignWuggy._remoteIpAdress == synchronizationData._RemoteIPAdress).updateTransform(synchronizationData);
+                            foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress).updateTransform(recievedSynchronizationData);
                         }
                     }
                 }
             }
         }
 
-        private void synchronizeWuggyWithServer()
+        private void synchronizeWuggyWithServer(SynchronizationData _ownData)
         {
-            _wuggyTransform.Rotation = synchronizationData._Rotation;
-            _wuggyTransform.Translation = synchronizationData._Translation;
+            _wuggyTransform.Rotation = _ownData._Rotation;
+            _wuggyTransform.Translation = _ownData._Translation;
         }
 
         public static long IP2Long(string ip)

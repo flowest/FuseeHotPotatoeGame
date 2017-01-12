@@ -45,6 +45,9 @@
     <Reference Include="Fusee.Math.Core">
       <HintPath>$(FuseeRoot)bin\Debug\Libraries\Fusee.Math.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Fusee.Serialization">
+      <HintPath>..\..\..\..\Fusee\bin\Debug\Libraries\Fusee.Serialization.dll</HintPath>
+    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
     </Reference>

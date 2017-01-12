@@ -13,10 +13,10 @@ namespace Fusee.Tutorial.Core
 {
     class ForeignWuggy
     {
-        public long _remoteIpAdress { get; set; }
 
         public SceneContainer _sceneContainer;
         public TransformComponent _wuggyTransform;
+        public SynchronizationData _connectedPlayerSyncData;
 
         public ForeignWuggy(long remoteIPAdress)
         {
@@ -24,7 +24,7 @@ namespace Fusee.Tutorial.Core
             _wuggyTransform = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
             _wuggyTransform.Scale = new float3(1, 1, 1);
 
-            this._remoteIpAdress = remoteIPAdress;
+            this._connectedPlayerSyncData._RemoteIPAdress = remoteIPAdress;
         }
 
         public void updateTransform(SynchronizationData synchData)
