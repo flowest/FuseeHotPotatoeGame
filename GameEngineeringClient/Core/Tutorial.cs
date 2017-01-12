@@ -256,10 +256,9 @@ namespace Fusee.Tutorial.Core
                
                 if (msg.Type == MessageType.Data)
                 {
-                    Debug.WriteLine(msg.Message.MsgChannel);
                     switch (msg.Message.MsgChannel)
                     {
-                        case 0:
+                        case 1:
                             memoryStream = new MemoryStream(msg.Message.ReadBytes);
                             recievedSynchronizationData = (SynchronizationData) serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
                             //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
@@ -286,10 +285,16 @@ namespace Fusee.Tutorial.Core
                             memoryStream = new MemoryStream(msg.Message.ReadBytes);
                             DisconnectData disconnectData =(DisconnectData)serializer.Deserialize(memoryStream, null, typeof(DisconnectData));
                             Debug.WriteLine("Client Disconnect:" + disconnectData.disconnectedIP);
+                            removeClientFromList(disconnectData.disconnectedIP);
                             break;
                     }
                 }
             }
+        }
+
+        private void removeClientFromList(long disconnectedIP)
+        {
+            foreignWuggys.RemoveAll(client => client._connectedPlayerSyncData._RemoteIPAdress == disconnectedIP);
         }
 
         private void synchronizeWuggyWithServer(SynchronizationData _ownData)

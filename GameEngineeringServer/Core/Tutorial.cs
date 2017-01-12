@@ -264,15 +264,18 @@ namespace Fusee.Tutorial.Core
                     _RemoteIPAdress = connection.RemoteEndPoint.Address,
                     _Rotation = new float3(),
                     _Translation = new float3(),
-                    _Scale = new float3(1,1,1)
+                    _Scale = new float3(1, 1, 1)
                 });
             }
 
             else if (estatus == ConnectionStatus.Disconnected)
             {
-                sendDisconnectMessageToClients(connection.RemoteEndPoint.Address);
-                connectedClients.RemoveAll(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
-                
+                SynchronizationData tempSynchronizationData = connectedClients.FirstOrDefault(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
+                if (tempSynchronizationData != null)
+                {
+                    sendDisconnectMessageToClients(connection.RemoteEndPoint.Address);
+                    connectedClients.Remove(tempSynchronizationData);
+                }
             }
         }
 
@@ -280,7 +283,7 @@ namespace Fusee.Tutorial.Core
         {
             memoryStream = new MemoryStream();
 
-            serializer.Serialize(memoryStream, new DisconnectData {disconnectedIP = _disconnectedIP});
+            serializer.Serialize(memoryStream, new DisconnectData { disconnectedIP = _disconnectedIP });
             synchonizeDataByteArray = memoryStream.ToArray();
 
             Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 2);
