@@ -172,7 +172,7 @@ namespace Fusee.Tutorial.Core
         private bool _twoTouchRepeated;
 
         private bool _keys;
-
+        private MaterialComponent _wuggyMaterialComponent;
         private TransformComponent _wuggyTransform;
         private TransformComponent _wgyWheelBigR;
         private TransformComponent _wgyWheelBigL;
@@ -183,6 +183,9 @@ namespace Fusee.Tutorial.Core
 
         private Renderer _renderer;
 
+
+        private float3 catcherColor = new float3(1,0,0);
+        private float3 defaultColor;
 
         NetworkHandler.ControlInputData controls = new ControlInputData();
         SynchronizationData recievedSynchronizationData = new SynchronizationData();
@@ -212,7 +215,9 @@ namespace Fusee.Tutorial.Core
             _wgyWheelSmallR = _scene.Children.FindNodes(c => c.Name == "WheelSmallR").First()?.GetTransform();
             _wgyWheelSmallL = _scene.Children.FindNodes(c => c.Name == "WheelSmallL").First()?.GetTransform();
             _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
-
+            _wuggyMaterialComponent = _scene.Children.FindNodes(c => c.Name == "Wuggy").First().Children[1].GetMaterial();
+            defaultColor = _wuggyMaterialComponent.Diffuse.Color;
+         
             // Find the trees and store them in a list
             _trees = new List<SceneNodeContainer>();
             _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
@@ -316,6 +321,11 @@ namespace Fusee.Tutorial.Core
                 }
             }
             return (long)num;
+        }
+
+        private void changeWuggyColor(float3 newColor)
+        {
+            _wuggyMaterialComponent.Diffuse.Color = newColor;
         }
 
         // RenderAFrame is called once a frame
