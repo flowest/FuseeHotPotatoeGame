@@ -20,6 +20,7 @@ namespace Fusee.Tutorial.Core
 
         public ForeignWuggy(long remoteIPAdress)
         {
+            this._connectedPlayerSyncData = new SynchronizationData();
             _sceneContainer = AssetStorage.Get<Fusee.Serialization.SceneContainer>("Wuggy.fus");
             _wuggyTransform = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
             _wuggyTransform.Scale = new float3(1, 1, 1);
