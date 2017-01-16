@@ -324,6 +324,24 @@ namespace Fusee.Tutorial.Core
             }
         }
 
+        private void changeWuggyColorForHotPotatoe()
+        {
+            //ForeignWuggy currentHotPotatoe = foreignWuggys.FirstOrDefault(wuggy => wuggy._connectedPlayerSyncData._IsPotatoe);
+            //currentHotPotatoe?.changeColor(catcherColor);
+
+            foreach (ForeignWuggy wuggy in foreignWuggys)
+            {
+                if (wuggy._connectedPlayerSyncData._IsPotatoe)
+                {
+                    wuggy.changeColor(catcherColor);
+                }
+                else
+                {
+                    wuggy.changeColor(defaultColor);
+                }
+            }
+        }
+
         public static long IP2Long(string ip)
         {
             string[] ipBytes;

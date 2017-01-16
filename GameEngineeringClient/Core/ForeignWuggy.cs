@@ -17,12 +17,15 @@ namespace Fusee.Tutorial.Core
         public SceneContainer _sceneContainer;
         public TransformComponent _wuggyTransform;
         public SynchronizationData _connectedPlayerSyncData;
+        private MaterialComponent _wuggyMaterialComponent;
+
 
         public ForeignWuggy(long remoteIPAdress)
         {
             this._connectedPlayerSyncData = new SynchronizationData();
             _sceneContainer = AssetStorage.Get<Fusee.Serialization.SceneContainer>("Wuggy.fus");
             _wuggyTransform = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
+            _wuggyMaterialComponent = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First().Children[1].GetMaterial();
             _wuggyTransform.Scale = new float3(1, 1, 1);
 
             this._connectedPlayerSyncData._RemoteIPAdress = remoteIPAdress;
@@ -32,6 +35,11 @@ namespace Fusee.Tutorial.Core
         {
             this._wuggyTransform.Translation = synchData._Translation;
             this._wuggyTransform.Rotation = synchData._Rotation;
+        }
+
+        public void changeColor(float3 color)
+        {
+            _wuggyMaterialComponent.Diffuse.Color = color;
         }
     }
 }
