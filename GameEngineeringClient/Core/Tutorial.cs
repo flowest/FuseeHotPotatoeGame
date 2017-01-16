@@ -278,7 +278,7 @@ namespace Fusee.Tutorial.Core
                                 if (
                                     foreignWuggys.All(foreignWuggy =>foreignWuggy._connectedPlayerSyncData._RemoteIPAdress !=recievedSynchronizationData._RemoteIPAdress))
                                 {
-                                    foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData._RemoteIPAdress));
+                                    foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData));
                                 }
                                 else
                                 {
