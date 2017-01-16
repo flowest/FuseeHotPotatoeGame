@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -10,15 +12,14 @@ using Fusee.Engine.Core;
 using Fusee.Math.Core;
 using Fusee.Serialization;
 using Fusee.Xene;
+using NetworkHandler;
 using static System.Math;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
 
 
-
 namespace Fusee.Tutorial.Core
 {
-
     class Renderer : SceneVisitor
     {
         public ShaderEffect ShaderEffect;
@@ -150,7 +151,6 @@ namespace Fusee.Tutorial.Core
         }
     }
 
-
     [FuseeApplication(Name = "Tutorial Example", Description = "The official FUSEE Tutorial.")]
     public class Tutorial : RenderCanvas
     {
@@ -170,22 +170,33 @@ namespace Fusee.Tutorial.Core
         private bool _twoTouchRepeated;
 
         private bool _keys;
-
+        private MaterialComponent _wuggyMaterialComponent;
         private TransformComponent _wuggyTransform;
         private TransformComponent _wgyWheelBigR;
         private TransformComponent _wgyWheelBigL;
         private TransformComponent _wgyWheelSmallR;
         private TransformComponent _wgyWheelSmallL;
         private TransformComponent _wgyNeckHi;
-        private List<SceneNodeContainer> _trees;
 
         private Renderer _renderer;
 
+        private float3 catcherColor = new float3(1,0,0);
+        private float3 defaultColor;
 
-        ControlsForNetwork controls = new ControlsForNetwork();
+        private SynchronizationData ownSynchronizationData = new SynchronizationData();
+        private bool isPotatoe = false;
+
+        private int foreignWuggyWhoIsPotato = 0;
+
+        NetworkHandler.ControlInputData controls = new ControlInputData();
+        SynchronizationData recievedSynchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
-        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+        NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
         private byte[] controlsByteArray;
+
+        private long LongLocalIP;
+
+        private List<ForeignWuggy> foreignWuggys = new List<ForeignWuggy>();
 
         // Init is called on startup. 
         public override void Init()
@@ -193,7 +204,6 @@ namespace Fusee.Tutorial.Core
             // Load the scene
             _scene = AssetStorage.Get<SceneContainer>("WuggyLand.fus");
             _sceneScale = float4x4.CreateScale(0.04f);
-
 
             // Instantiate our self-written renderer
             _renderer = new Renderer(RC);
@@ -205,65 +215,150 @@ namespace Fusee.Tutorial.Core
             _wgyWheelSmallR = _scene.Children.FindNodes(c => c.Name == "WheelSmallR").First()?.GetTransform();
             _wgyWheelSmallL = _scene.Children.FindNodes(c => c.Name == "WheelSmallL").First()?.GetTransform();
             _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
-
-            // Find the trees and store them in a list
-            _trees = new List<SceneNodeContainer>();
-            _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
+            _wuggyMaterialComponent = _scene.Children.FindNodes(c => c.Name == "Wuggy").First().Children[1].GetMaterial();
+            defaultColor = _wuggyMaterialComponent.Diffuse.Color;
 
             // Set the clear color for the backbuffer
             RC.ClearColor = new float4(1, 1, 1, 1);
 
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Client; ;
-            //netCon.Config.ConnectOnDiscovery = true;
-            //netCon.Config.Discovery = true;
-            //netCon.StartPeer();
 
-            //netCon.SendDiscoveryMessage();
-            // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
-            netCon.OpenConnection("127.0.0.1");
+            netCon.OpenConnection("192.168.1.25");
 
-
-        }
-
-        static byte[] GetBytes(string str)
-        {
-            byte[] bytes = new byte[str.Length * sizeof(char)];
-            System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
+            LongLocalIP = IP2Long(NetworkImplementor.GetLocalIp());
         }
 
         private void getInputForNetwork()
         {
             memoryStream = new MemoryStream();
-            controls._ADAxis = Keyboard.ADAxis;
-            controls._WSAxis = Keyboard.WSAxis;
+            controls._ADValue = Keyboard.ADAxis;
+            controls._WSValue = Keyboard.WSAxis;
 
-            jsonSerializer.WriteObject(memoryStream, controls);
+            serializer.Serialize(memoryStream, controls);
             controlsByteArray = memoryStream.ToArray();
-            
+
             Network.Instance.SendMessage(controlsByteArray, MessageDelivery.ReliableOrdered, 1);
             memoryStream.Dispose();
+        }
+
+        private void getSynchronizationDataFromServer()
+        {
+            INetworkMsg msg;
+
+            while ((msg = Network.Instance.IncomingMsg) != null)
+            {
+               
+                if (msg.Type == MessageType.Data)
+                {
+                    switch (msg.Message.MsgChannel)
+                    {
+                        case 1:
+                            memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                            recievedSynchronizationData = (SynchronizationData) serializer.Deserialize(memoryStream, null, typeof(SynchronizationData));
+                            //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
+                            if (recievedSynchronizationData._RemoteIPAdress == LongLocalIP)
+                            {
+                                ownSynchronizationData = recievedSynchronizationData;
+                                synchronizeWuggyWithServer();
+                            }
+                            else
+                            {
+                                if (
+                                    foreignWuggys.All(foreignWuggy =>foreignWuggy._connectedPlayerSyncData._RemoteIPAdress !=recievedSynchronizationData._RemoteIPAdress))
+                                {
+                                    foreignWuggys.Add(new ForeignWuggy(recievedSynchronizationData));
+                                }
+                                else
+                                {
+                                    ForeignWuggy currentWuggy = foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress);
+                                    currentWuggy._connectedPlayerSyncData = recievedSynchronizationData;
+                                    currentWuggy.updateTransform();
+                                }
+                            }
+
+                            break;
+
+                        case 2:
+                            memoryStream = new MemoryStream(msg.Message.ReadBytes);
+                            DisconnectData disconnectData =(DisconnectData)serializer.Deserialize(memoryStream, null, typeof(DisconnectData));
+                            Debug.WriteLine("Client Disconnect:" + disconnectData.disconnectedIP);
+                            removeClientFromList(disconnectData.disconnectedIP);
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void removeClientFromList(long disconnectedIP)
+        {
+            foreignWuggys.RemoveAll(client => client._connectedPlayerSyncData._RemoteIPAdress == disconnectedIP);
+        }
+
+        private void synchronizeWuggyWithServer()
+        {
+            _wuggyTransform.Rotation = ownSynchronizationData._Rotation;
+            _wuggyTransform.Translation = ownSynchronizationData._Translation;
+            if (ownSynchronizationData._IsPotatoe != isPotatoe)
+            {
+                if (ownSynchronizationData._IsPotatoe)
+                {
+                    changeWuggyColor(catcherColor);
+                }
+                else
+                {
+                    changeWuggyColor(defaultColor);
+                }
+                isPotatoe = ownSynchronizationData._IsPotatoe;
+            }
+        }
+
+        private void changeWuggyColorForHotPotatoe()
+        {
+            int index = 0;
+            foreach (ForeignWuggy wuggy in foreignWuggys)
+            {
+                if (wuggy._connectedPlayerSyncData._IsPotatoe)
+                {
+                    wuggy.changeColor(catcherColor);
+                    foreignWuggyWhoIsPotato = index;
+                }
+                else
+                {
+                    wuggy.changeColor(defaultColor);
+                }
+                index++;
+            }
+        }
+
+        public static long IP2Long(string ip)
+        {
+            string[] ipBytes;
+            double num = 0;
+            if (!string.IsNullOrEmpty(ip))
+            {
+                ipBytes = ip.Split('.');
+                for (int i = ipBytes.Length - 1; i >= 0; i--)
+                {
+                    num += ((int.Parse(ipBytes[i]) % 256) * System.Math.Pow(256, (3 - i)));
+                }
+            }
+            return (long)num;
+        }
+
+        private void changeWuggyColor(float3 newColor)
+        {
+            _wuggyMaterialComponent.Diffuse.Color = newColor;
         }
 
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
             getInputForNetwork();
+            getSynchronizationDataFromServer();
+            changeWuggyColorForHotPotatoe();
 
-            if (Keyboard.IsKeyDown(KeyCodes.A))
-            {
-                //Network.Instance.SendMessage(GetBytes("A is pressed!"), MessageDelivery.ReliableOrdered, 1);
-
-            }
-
-            //if (Keyboard.IsKeyDown(KeyCodes.W))
-            //{
-            //    Network.Instance.SendMessage(GetBytes("W is pressed!"), MessageDelivery.ReliableOrdered, 1);
-            //}
-
-            //Network.Instance.SendMessage(GetBytes(Keyboard.WSAxis.ToString()), MessageDelivery.ReliableOrdered, 1);
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
@@ -326,31 +421,35 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
+            float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
+            float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
 
-            // Wuggy XForm
-            float wuggyYaw = _wuggyTransform.Rotation.y;
-            wuggyYaw += wuggyYawSpeed;
-            wuggyYaw = NormRot(wuggyYaw);
-            float3 wuggyPos = _wuggyTransform.Translation;
-            wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
-            _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
-            _wuggyTransform.Translation = wuggyPos;
+            if (ownSynchronizationData._CanMove)
+            {
+                // Wuggy XForm
+                float wuggyYaw = _wuggyTransform.Rotation.y;
+                wuggyYaw += wuggyYawSpeed;
+                wuggyYaw = NormRot(wuggyYaw);
+                float3 wuggyPos = _wuggyTransform.Translation;
+                wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
+                _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
+                _wuggyTransform.Translation = wuggyPos;
 
-            // Wuggy Wheels
-            _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
+                // Wuggy Wheels
+                _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
+                _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
+                _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+                _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0); 
+            }
+
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
-            SceneNodeContainer target = GetClosest();
+            //SceneNodeContainer target = GetClosest();
             float camYaw = 0;
-            if (target != null)
+            if (isPotatoe == false&&foreignWuggys.Count>0)
             {
-                float3 delta = target.GetTransform().Translation - _wuggyTransform.Translation;
+                float3 delta = foreignWuggys[foreignWuggyWhoIsPotato]._wuggyTransform.Translation - _wuggyTransform.Translation;
                 camYaw = (float)Atan2(-delta.x, -delta.z) - _wuggyTransform.Rotation.y;
             }
 
@@ -394,26 +493,14 @@ namespace Fusee.Tutorial.Core
 
             _renderer.Traverse(_scene.Children);
 
+            foreach (var foreignWuggy in foreignWuggys)
+            {
+                _renderer.Traverse(foreignWuggy._sceneContainer.Children);
+            }
+
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
 
-        }
-
-        private SceneNodeContainer GetClosest()
-        {
-            float minDist = float.MaxValue;
-            SceneNodeContainer ret = null;
-            foreach (var target in _trees)
-            {
-                var xf = target.GetTransform();
-                float dist = (_wuggyTransform.Translation - xf.Translation).Length;
-                if (dist < minDist && dist < 1000)
-                {
-                    ret = target;
-                    minDist = dist;
-                }
-            }
-            return ret;
         }
 
         public static float NormRot(float rot)

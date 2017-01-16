@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -13,12 +14,11 @@ using Fusee.Xene;
 using static System.Math;
 using static Fusee.Engine.Core.Input;
 using static Fusee.Engine.Core.Time;
-
+using NetworkHandler;
 
 
 namespace Fusee.Tutorial.Core
 {
-
     class Renderer : SceneVisitor
     {
         public ShaderEffect ShaderEffect;
@@ -102,7 +102,7 @@ namespace Fusee.Tutorial.Core
             // RC.Render(LookupMesh(mesh));
         }
         [VisitMethod]
-        void OnMaterial(MaterialComponent material)
+        void OnMaterial(Fusee.Serialization.MaterialComponent material)
         {
             if (material.HasDiffuse)
             {
@@ -150,7 +150,6 @@ namespace Fusee.Tutorial.Core
         }
     }
 
-
     [FuseeApplication(Name = "Tutorial Example", Description = "The official FUSEE Tutorial.")]
     public class Tutorial : RenderCanvas
     {
@@ -163,7 +162,7 @@ namespace Fusee.Tutorial.Core
         private const float RotationSpeed = 7;
         private const float Damping = 0.8f;
 
-        private SceneContainer _scene;
+        //private Fusee.Serialization.SceneContainer _scene;
         private float4x4 _sceneCenter;
         private float4x4 _sceneScale;
         private float4x4 _projection;
@@ -171,45 +170,27 @@ namespace Fusee.Tutorial.Core
 
         private bool _keys;
 
-        private TransformComponent _wuggyTransform;
-        private TransformComponent _wgyWheelBigR;
-        private TransformComponent _wgyWheelBigL;
-        private TransformComponent _wgyWheelSmallR;
-        private TransformComponent _wgyWheelSmallL;
-        private TransformComponent _wgyNeckHi;
-        private List<SceneNodeContainer> _trees;
-
         private Renderer _renderer;
 
-        System.Globalization.CultureInfo customCulture = (System.Globalization.CultureInfo)System.Threading.Thread.CurrentThread.CurrentCulture.Clone();
-        ControlsForNetwork controls = new ControlsForNetwork();
         MemoryStream memoryStream = new MemoryStream();
-        DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(ControlsForNetwork));
+        NetworkHandlerSerializer serializer = new NetworkHandlerSerializer();
 
+        private byte[] synchonizeDataByteArray;
+
+        private SynchronizationData hotPotatoeInConnectedClientList;
+        private List<SynchronizationData> connectedClients = new List<SynchronizationData>();
+
+        private float potatoeTimer = 0;
+        private float potatoeTimeout = 2;
 
 
         // Init is called on startup. 
         public override void Init()
         {
-            // Load the scene
-            _scene = AssetStorage.Get<SceneContainer>("WuggyLand.fus");
             _sceneScale = float4x4.CreateScale(0.04f);
-
 
             // Instantiate our self-written renderer
             _renderer = new Renderer(RC);
-
-            // Find some transform nodes we want to manipulate in the scene
-            _wuggyTransform = _scene.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
-            _wgyWheelBigR = _scene.Children.FindNodes(c => c.Name == "WheelBigR").First()?.GetTransform();
-            _wgyWheelBigL = _scene.Children.FindNodes(c => c.Name == "WheelBigL").First()?.GetTransform();
-            _wgyWheelSmallR = _scene.Children.FindNodes(c => c.Name == "WheelSmallR").First()?.GetTransform();
-            _wgyWheelSmallL = _scene.Children.FindNodes(c => c.Name == "WheelSmallL").First()?.GetTransform();
-            _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
-
-            // Find the trees and store them in a list
-            _trees = new List<SceneNodeContainer>();
-            _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
 
             // Set the clear color for the backbuffer
             RC.ClearColor = new float4(1, 1, 1, 1);
@@ -217,30 +198,47 @@ namespace Fusee.Tutorial.Core
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Server;
             netCon.StartPeer();
-
-            customCulture.NumberFormat.NumberDecimalSeparator = ",";
-
-            //netCon.Config.ConnectOnDiscovery = true;
-            //netCon.Config.Discovery = true;
-            //netCon.SendDiscoveryMessage();
-
-
-
-            // netCon.Config.SysType = SysType.Peer;
-            // netCon.StartPeer(1337);
-            // System.Diagnostics.Debug.WriteLine(netCon.IncomingMsg);
-
         }
 
-        static string GetString(byte[] bytes)
+        private void checkForColision()
         {
-            char[] chars = new char[bytes.Length / sizeof(char)];
-            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            return new string(chars);
+            hotPotatoeInConnectedClientList._CanMove = true;
+            foreach (SynchronizationData connectedClient in connectedClients)
+            {
+                if (connectedClient._RemoteIPAdress == hotPotatoeInConnectedClientList._RemoteIPAdress)
+                {
+                    continue;
+                }
+                if (getDistance(hotPotatoeInConnectedClientList._Translation, connectedClient._Translation) < 200)
+                {
+                    hotPotatoeInConnectedClientList._IsPotatoe = false;
+                    hotPotatoeInConnectedClientList = connectedClient;
+                    hotPotatoeInConnectedClientList._IsPotatoe = true;
+                    hotPotatoeInConnectedClientList._CanMove = false;
+                    potatoeTimer = 0;
+                    return;
+                }
+            }
         }
 
-        // RenderAFrame is called once a frame
-        public override void RenderAFrame()
+        private float getDistance(float3 p, float3 q)
+        {
+            double distance = System.Math.Sqrt(System.Math.Pow(q.x - p.x, 2) + System.Math.Pow(q.y - p.y, 2) + System.Math.Pow(q.z - p.z, 2));
+            return (float) Abs(distance);
+        }
+
+        private void sendSynchronizeDataToClients(SynchronizationData connectedClient)
+        {
+            memoryStream = new MemoryStream();
+
+            serializer.Serialize(memoryStream, connectedClient);
+            synchonizeDataByteArray = memoryStream.ToArray();
+
+            Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 1);
+            memoryStream.Dispose();
+        }
+
+        private void getInputDataFromClients()
         {
             INetworkMsg msg;
 
@@ -249,43 +247,89 @@ namespace Fusee.Tutorial.Core
                 if (msg.Type == MessageType.Data)
                 {
                     memoryStream = new MemoryStream(msg.Message.ReadBytes);
-                    controls = (ControlsForNetwork) jsonSerializer.ReadObject(memoryStream);
-                    System.Diagnostics.Debug.WriteLine(controls._ADAxis + " + " + controls._WSAxis);
+                    ControlInputData controls = (ControlInputData)serializer.Deserialize(memoryStream, null, typeof(ControlInputData));
+
+                    connectedClients.First(client => client._RemoteIPAdress == msg.Sender.RemoteEndPoint.Address)._ControlInput = controls;
+                }
+            }
+        }
+
+        private void calculateClientWuggyPositions()
+        {
+            foreach (var connectedClient in connectedClients)
+            {
+                if (connectedClient._CanMove)
+                {
+                    SynchronizationData updatedClient = CalculateClientTransform.calculatePosition(connectedClient, DeltaTime);
+                    connectedClient._Rotation = updatedClient._Rotation;
+                    connectedClient._Translation = updatedClient._Translation;
+                }
+                sendSynchronizeDataToClients(connectedClient);
+            }
+        }
+
+        private void handleConnections(ConnectionStatus estatus, INetworkConnection connection)
+        {
+            if (estatus == ConnectionStatus.Connected && connectedClients.All(connectedClient => connectedClient._RemoteIPAdress != connection.RemoteEndPoint.Address))
+            {
+                connectedClients.Add(new SynchronizationData
+                {
+                    _ControlInput = new ControlInputData(),
+                    _RemoteIPAdress = connection.RemoteEndPoint.Address,
+                    _Rotation = new float3(),
+                    _Translation = new float3(0,-100,0),
+                    _Scale = new float3(1, 1, 1),
+                    _IsPotatoe = false,
+                    _CanMove = true
+                });
+                if (connectedClients.Count == 1)
+                {
+                    connectedClients[0]._IsPotatoe = true;
+                    hotPotatoeInConnectedClientList = connectedClients[0];
                 }
             }
 
-            //Network.Instance.IncomingMsg.Message.ReadBytes.
+            else if (estatus == ConnectionStatus.Disconnected)
+            {
+                SynchronizationData tempSynchronizationData = connectedClients.FirstOrDefault(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
+                if (tempSynchronizationData != null)
+                {
+                    if (tempSynchronizationData._IsPotatoe && connectedClients.Count > 0)
+                    {
+                        connectedClients[0]._IsPotatoe = true;
+                    }
+                    sendDisconnectMessageToClients(connection.RemoteEndPoint.Address);
+                    connectedClients.Remove(tempSynchronizationData);
+                }
+            }
+        }
+
+        private void sendDisconnectMessageToClients(long _disconnectedIP)
+        {
+            memoryStream = new MemoryStream();
+
+            serializer.Serialize(memoryStream, new DisconnectData { disconnectedIP = _disconnectedIP });
+            synchonizeDataByteArray = memoryStream.ToArray();
+
+            Network.Instance.SendMessage(synchonizeDataByteArray, MessageDelivery.ReliableOrdered, 2);
+            memoryStream.Dispose();
+        }
+
+        // RenderAFrame is called once a frame
+        public override void RenderAFrame()
+        {
+            Network.Instance.OnConnectionUpdate += handleConnections;
+            getInputDataFromClients();
+            calculateClientWuggyPositions();
+
+            potatoeTimer += DeltaTime;
+            if (connectedClients.Count > 1 && potatoeTimer > potatoeTimeout)
+            {
+                checkForColision();
+            }
+
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
-
-            // Mouse and keyboard movement
-            if (Keyboard.LeftRightAxis != 0 || Keyboard.UpDownAxis != 0)
-            {
-                _keys = true;
-            }
-
-            var curDamp = (float)System.Math.Exp(-Damping * DeltaTime);
-
-            // Zoom & Roll
-            if (Touch.TwoPoint)
-            {
-                if (!_twoTouchRepeated)
-                {
-                    _twoTouchRepeated = true;
-                    _angleRollInit = Touch.TwoPointAngle - _angleRoll;
-                    _offsetInit = Touch.TwoPointMidPoint - _offset;
-                }
-                _zoomVel = Touch.TwoPointDistanceVel * -0.01f;
-                _angleRoll = Touch.TwoPointAngle - _angleRollInit;
-                _offset = Touch.TwoPointMidPoint - _offsetInit;
-            }
-            else
-            {
-                _twoTouchRepeated = false;
-                _zoomVel = Mouse.WheelVel * -0.5f;
-                _angleRoll *= curDamp * 0.8f;
-                _offset *= curDamp * 0.8f;
-            }
 
             // UpDown / LeftRight rotation
             if (Mouse.LeftButton)
@@ -309,51 +353,7 @@ namespace Fusee.Tutorial.Core
                     _angleVelHorz = -RotationSpeed * Keyboard.LeftRightAxis * 0.002f;
                     _angleVelVert = -RotationSpeed * Keyboard.UpDownAxis * 0.002f;
                 }
-                else
-                {
-                    _angleVelHorz *= curDamp;
-                    _angleVelVert *= curDamp;
-                }
             }
-
-            float wuggyYawSpeed = controls._WSAxis * controls._ADAxis * 0.03f * DeltaTime * 50;
-            float wuggySpeed = controls._WSAxis * -10 * DeltaTime * 50;
-
-            // Wuggy XForm
-            float wuggyYaw = _wuggyTransform.Rotation.y;
-            wuggyYaw += wuggyYawSpeed;
-            wuggyYaw = NormRot(wuggyYaw);
-            float3 wuggyPos = _wuggyTransform.Translation;
-            wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
-            _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
-            _wuggyTransform.Translation = wuggyPos;
-
-            // Wuggy Wheels
-            _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADAxis * 0.3f, 0);
-
-            // SCRATCH:
-            // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
-            SceneNodeContainer target = GetClosest();
-            float camYaw = 0;
-            if (target != null)
-            {
-                float3 delta = target.GetTransform().Translation - _wuggyTransform.Translation;
-                camYaw = (float)Atan2(-delta.x, -delta.z) - _wuggyTransform.Rotation.y;
-            }
-
-            camYaw = NormRot(camYaw);
-            float deltaAngle = camYaw - _wgyNeckHi.Rotation.y;
-            if (deltaAngle > M.Pi)
-                deltaAngle = deltaAngle - M.TwoPi;
-            if (deltaAngle < -M.Pi)
-                deltaAngle = deltaAngle + M.TwoPi; ;
-            var newYaw = _wgyNeckHi.Rotation.y + (float)M.Clamp(deltaAngle, -0.06, 0.06);
-            newYaw = NormRot(newYaw);
-            _wgyNeckHi.Rotation = new float3(0, newYaw, 0);
-
 
             _zoom += _zoomVel;
             // Limit zoom
@@ -373,7 +373,6 @@ namespace Fusee.Tutorial.Core
             // Wrap-around to keep _angleRoll between -PI and + PI
             _angleRoll = M.MinAngle(_angleRoll);
 
-
             // Create the camera matrix and set it as the current ModelView transformation
             var mtxRot = float4x4.CreateRotationZ(_angleRoll) * float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
             var mtxCam = float4x4.LookAt(0, 20, -_zoom, 0, 0, 0, 0, 1, 0);
@@ -381,29 +380,8 @@ namespace Fusee.Tutorial.Core
             var mtxOffset = float4x4.CreateTranslation(2 * _offset.x / Width, -2 * _offset.y / Height, 0);
             RC.Projection = mtxOffset * _projection;
 
-
-            _renderer.Traverse(_scene.Children);
-
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
-
-        }
-
-        private SceneNodeContainer GetClosest()
-        {
-            float minDist = float.MaxValue;
-            SceneNodeContainer ret = null;
-            foreach (var target in _trees)
-            {
-                var xf = target.GetTransform();
-                float dist = (_wuggyTransform.Translation - xf.Translation).Length;
-                if (dist < minDist && dist < 1000)
-                {
-                    ret = target;
-                    minDist = dist;
-                }
-            }
-            return ret;
         }
 
         public static float NormRot(float rot)
@@ -414,8 +392,6 @@ namespace Fusee.Tutorial.Core
                 rot += M.TwoPi;
             return rot;
         }
-
-
 
         // Is called when the window was resized
         public override void Resize()
