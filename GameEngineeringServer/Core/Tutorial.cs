@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -186,9 +187,11 @@ namespace Fusee.Tutorial.Core
 
         private byte[] synchonizeDataByteArray;
 
+        private SynchronizationData hotPotatoeInConnectedClientList;
         private List<SynchronizationData> connectedClients = new List<SynchronizationData>();
 
-
+        private float potatoeTimer = 0;
+        private float potatoeTimeout = 2;
 
 
         // Init is called on startup. 
@@ -211,6 +214,31 @@ namespace Fusee.Tutorial.Core
             netCon.StartPeer();
 
 
+        }
+
+        private void checkForColision()
+        {
+            foreach (SynchronizationData connectedClient in connectedClients)
+            {
+                if (connectedClient._RemoteIPAdress == hotPotatoeInConnectedClientList._RemoteIPAdress)
+                {
+                    continue;
+                }
+                if (getDistance(hotPotatoeInConnectedClientList._Translation, connectedClient._Translation) < 200)
+                {
+                    hotPotatoeInConnectedClientList._IsPotatoe = false;
+                    hotPotatoeInConnectedClientList = connectedClient;
+                    hotPotatoeInConnectedClientList._IsPotatoe = true;
+                    potatoeTimer = 0;
+                    return;
+                }
+            }
+        }
+
+        private float getDistance(float3 p, float3 q)
+        {
+            double distance = System.Math.Sqrt(System.Math.Pow(q.x - p.x, 2) + System.Math.Pow(q.y - p.y, 2) + System.Math.Pow(q.z - p.z, 2));
+            return (float) Abs(distance);
         }
 
         private void sendSynchronizeDataToClients(SynchronizationData connectedClient)
@@ -264,8 +292,14 @@ namespace Fusee.Tutorial.Core
                     _RemoteIPAdress = connection.RemoteEndPoint.Address,
                     _Rotation = new float3(),
                     _Translation = new float3(),
-                    _Scale = new float3(1, 1, 1)
+                    _Scale = new float3(1, 1, 1),
+                    _IsPotatoe = false
                 });
+                if (connectedClients.Count == 1)
+                {
+                    connectedClients[0]._IsPotatoe = true;
+                    hotPotatoeInConnectedClientList = connectedClients[0];
+                }
             }
 
             else if (estatus == ConnectionStatus.Disconnected)
@@ -296,6 +330,12 @@ namespace Fusee.Tutorial.Core
             Network.Instance.OnConnectionUpdate += handleConnections;
             getInputDataFromClients();
             calculateClientWuggyPositions();
+
+            potatoeTimer += DeltaTime;
+            if (connectedClients.Count > 1 && potatoeTimer > potatoeTimeout)
+            {
+                checkForColision();
+            }
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);

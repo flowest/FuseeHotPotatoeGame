@@ -187,6 +187,8 @@ namespace Fusee.Tutorial.Core
         private float3 catcherColor = new float3(1,0,0);
         private float3 defaultColor;
 
+        private bool isPotatoe = false;
+
         NetworkHandler.ControlInputData controls = new ControlInputData();
         SynchronizationData recievedSynchronizationData = new SynchronizationData();
         MemoryStream memoryStream = new MemoryStream();
@@ -306,6 +308,20 @@ namespace Fusee.Tutorial.Core
         {
             _wuggyTransform.Rotation = _ownData._Rotation;
             _wuggyTransform.Translation = _ownData._Translation;
+            if (_ownData._IsPotatoe != isPotatoe)
+            {
+                if (_ownData._IsPotatoe)
+                {
+                    changeWuggyColor(catcherColor);
+
+                }
+                else
+                {
+                    changeWuggyColor(defaultColor);
+
+                }
+                isPotatoe = _ownData._IsPotatoe;
+            }
         }
 
         public static long IP2Long(string ip)

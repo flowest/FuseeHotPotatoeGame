@@ -16,5 +16,7 @@ namespace NetworkHandler
         public long _RemoteIPAdress { get; set; }
         [ProtoMember(5)]
         public ControlInputData _ControlInput { get; set; }
+        [ProtoMember(6)]
+        public bool _IsPotatoe { get; set; }
     }
 }
