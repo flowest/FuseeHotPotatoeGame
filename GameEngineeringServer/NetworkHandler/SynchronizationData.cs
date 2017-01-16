@@ -18,5 +18,7 @@ namespace NetworkHandler
         public ControlInputData _ControlInput { get; set; }
         [ProtoMember(6)]
         public bool _IsPotatoe { get; set; }
+        [ProtoMember(7)]
+        public bool _CanMove { get; set; }
     }
 }

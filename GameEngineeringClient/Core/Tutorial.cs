@@ -187,7 +187,10 @@ namespace Fusee.Tutorial.Core
         private float3 catcherColor = new float3(1,0,0);
         private float3 defaultColor;
 
+        private SynchronizationData ownSynchronizationData = new SynchronizationData();
         private bool isPotatoe = false;
+
+        private int foreignWuggyWhoIsPotato = 0;
 
         NetworkHandler.ControlInputData controls = new ControlInputData();
         SynchronizationData recievedSynchronizationData = new SynchronizationData();
@@ -271,7 +274,8 @@ namespace Fusee.Tutorial.Core
                             //System.Diagnostics.Debug.WriteLine(recievedSynchronizationData._Rotation + " + " + recievedSynchronizationData._Translation);
                             if (recievedSynchronizationData._RemoteIPAdress == LongLocalIP)
                             {
-                                synchronizeWuggyWithServer(recievedSynchronizationData);
+                                ownSynchronizationData = recievedSynchronizationData;
+                                synchronizeWuggyWithServer();
                             }
                             else
                             {
@@ -282,9 +286,9 @@ namespace Fusee.Tutorial.Core
                                 }
                                 else
                                 {
-                                    ForeignWuggy temp = foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress);
-                                    temp._connectedPlayerSyncData = recievedSynchronizationData;
-                                    temp.updateTransform();
+                                    ForeignWuggy currentWuggy = foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress);
+                                    currentWuggy._connectedPlayerSyncData = recievedSynchronizationData;
+                                    currentWuggy.updateTransform();
                                 }
                             }
 
@@ -306,13 +310,13 @@ namespace Fusee.Tutorial.Core
             foreignWuggys.RemoveAll(client => client._connectedPlayerSyncData._RemoteIPAdress == disconnectedIP);
         }
 
-        private void synchronizeWuggyWithServer(SynchronizationData _ownData)
+        private void synchronizeWuggyWithServer()
         {
-            _wuggyTransform.Rotation = _ownData._Rotation;
-            _wuggyTransform.Translation = _ownData._Translation;
-            if (_ownData._IsPotatoe != isPotatoe)
+            _wuggyTransform.Rotation = ownSynchronizationData._Rotation;
+            _wuggyTransform.Translation = ownSynchronizationData._Translation;
+            if (ownSynchronizationData._IsPotatoe != isPotatoe)
             {
-                if (_ownData._IsPotatoe)
+                if (ownSynchronizationData._IsPotatoe)
                 {
                     changeWuggyColor(catcherColor);
 
@@ -322,25 +326,25 @@ namespace Fusee.Tutorial.Core
                     changeWuggyColor(defaultColor);
 
                 }
-                isPotatoe = _ownData._IsPotatoe;
+                isPotatoe = ownSynchronizationData._IsPotatoe;
             }
         }
 
         private void changeWuggyColorForHotPotatoe()
         {
-            //ForeignWuggy currentHotPotatoe = foreignWuggys.FirstOrDefault(wuggy => wuggy._connectedPlayerSyncData._IsPotatoe);
-            //currentHotPotatoe?.changeColor(catcherColor);
-
+            int index = 0;
             foreach (ForeignWuggy wuggy in foreignWuggys)
             {
                 if (wuggy._connectedPlayerSyncData._IsPotatoe)
                 {
                     wuggy.changeColor(catcherColor);
+                    foreignWuggyWhoIsPotato = index;
                 }
                 else
                 {
                     wuggy.changeColor(defaultColor);
                 }
+                index++;
             }
         }
 
@@ -436,28 +440,32 @@ namespace Fusee.Tutorial.Core
             float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
             float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
 
-            // Wuggy XForm
-            float wuggyYaw = _wuggyTransform.Rotation.y;
-            wuggyYaw += wuggyYawSpeed;
-            wuggyYaw = NormRot(wuggyYaw);
-            float3 wuggyPos = _wuggyTransform.Translation;
-            wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
-            _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
-            _wuggyTransform.Translation = wuggyPos;
+            if (ownSynchronizationData._CanMove)
+            {
+                // Wuggy XForm
+                float wuggyYaw = _wuggyTransform.Rotation.y;
+                wuggyYaw += wuggyYawSpeed;
+                wuggyYaw = NormRot(wuggyYaw);
+                float3 wuggyPos = _wuggyTransform.Translation;
+                wuggyPos += new float3((float)Sin(wuggyYaw), 0, (float)Cos(wuggyYaw)) * wuggySpeed;
+                _wuggyTransform.Rotation = new float3(0, wuggyYaw, 0);
+                _wuggyTransform.Translation = wuggyPos;
 
-            // Wuggy Wheels
-            _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
-            _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
-            _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+                // Wuggy Wheels
+                _wgyWheelBigR.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
+                _wgyWheelBigL.Rotation += new float3(wuggySpeed * 0.008f, 0, 0);
+                _wgyWheelSmallR.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0);
+                _wgyWheelSmallL.Rotation = new float3(_wgyWheelSmallR.Rotation.x + wuggySpeed * 0.016f, -controls._ADValue * 0.3f, 0); 
+            }
+
 
             // SCRATCH:
             // _guiSubText.Text = target.Name + " " + target.GetComponent<TargetComponent>().ExtraInfo;
-            SceneNodeContainer target = GetClosest();
+            //SceneNodeContainer target = GetClosest();
             float camYaw = 0;
-            if (target != null)
+            if (isPotatoe == false&&foreignWuggys.Count>0)
             {
-                float3 delta = target.GetTransform().Translation - _wuggyTransform.Translation;
+                float3 delta = foreignWuggys[foreignWuggyWhoIsPotato]._wuggyTransform.Translation - _wuggyTransform.Translation;
                 camYaw = (float)Atan2(-delta.x, -delta.z) - _wuggyTransform.Rotation.y;
             }
 

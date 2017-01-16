@@ -218,6 +218,7 @@ namespace Fusee.Tutorial.Core
 
         private void checkForColision()
         {
+            hotPotatoeInConnectedClientList._CanMove = true;
             foreach (SynchronizationData connectedClient in connectedClients)
             {
                 if (connectedClient._RemoteIPAdress == hotPotatoeInConnectedClientList._RemoteIPAdress)
@@ -229,6 +230,7 @@ namespace Fusee.Tutorial.Core
                     hotPotatoeInConnectedClientList._IsPotatoe = false;
                     hotPotatoeInConnectedClientList = connectedClient;
                     hotPotatoeInConnectedClientList._IsPotatoe = true;
+                    hotPotatoeInConnectedClientList._CanMove = false;
                     potatoeTimer = 0;
                     return;
                 }
@@ -274,10 +276,12 @@ namespace Fusee.Tutorial.Core
         {
             foreach (var connectedClient in connectedClients)
             {
-
-                SynchronizationData updatedClient = CalculateClientTransform.calculatePosition(connectedClient, DeltaTime);
-                connectedClient._Rotation = updatedClient._Rotation;
-                connectedClient._Translation = updatedClient._Translation;
+                if (connectedClient._CanMove)
+                {
+                    SynchronizationData updatedClient = CalculateClientTransform.calculatePosition(connectedClient, DeltaTime);
+                    connectedClient._Rotation = updatedClient._Rotation;
+                    connectedClient._Translation = updatedClient._Translation;
+                }
                 sendSynchronizeDataToClients(connectedClient);
             }
         }
@@ -291,9 +295,10 @@ namespace Fusee.Tutorial.Core
                     _ControlInput = new ControlInputData(),
                     _RemoteIPAdress = connection.RemoteEndPoint.Address,
                     _Rotation = new float3(),
-                    _Translation = new float3(),
+                    _Translation = new float3(0,-100,0),
                     _Scale = new float3(1, 1, 1),
-                    _IsPotatoe = false
+                    _IsPotatoe = false,
+                    _CanMove = true
                 });
                 if (connectedClients.Count == 1)
                 {
@@ -307,6 +312,10 @@ namespace Fusee.Tutorial.Core
                 SynchronizationData tempSynchronizationData = connectedClients.FirstOrDefault(client => client._RemoteIPAdress == connection.RemoteEndPoint.Address);
                 if (tempSynchronizationData != null)
                 {
+                    if (tempSynchronizationData._IsPotatoe && connectedClients.Count > 0)
+                    {
+                        connectedClients[0]._IsPotatoe = true;
+                    }
                     sendDisconnectMessageToClients(connection.RemoteEndPoint.Address);
                     connectedClients.Remove(tempSynchronizationData);
                 }
@@ -327,6 +336,8 @@ namespace Fusee.Tutorial.Core
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
+
+
             Network.Instance.OnConnectionUpdate += handleConnections;
             getInputDataFromClients();
             calculateClientWuggyPositions();
