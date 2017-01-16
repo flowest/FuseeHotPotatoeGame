@@ -282,7 +282,9 @@ namespace Fusee.Tutorial.Core
                                 }
                                 else
                                 {
-                                    foreignWuggys.First(foreignWuggy =>foreignWuggy._connectedPlayerSyncData._RemoteIPAdress ==recievedSynchronizationData._RemoteIPAdress).updateTransform(recievedSynchronizationData);
+                                    ForeignWuggy temp = foreignWuggys.First(foreignWuggy => foreignWuggy._connectedPlayerSyncData._RemoteIPAdress == recievedSynchronizationData._RemoteIPAdress);
+                                    temp._connectedPlayerSyncData = recievedSynchronizationData;
+                                    temp.updateTransform();
                                 }
                             }
 
@@ -367,6 +369,7 @@ namespace Fusee.Tutorial.Core
         {
             getInputForNetwork();
             getSynchronizationDataFromServer();
+            changeWuggyColorForHotPotatoe();
 
 
             // Clear the backbuffer

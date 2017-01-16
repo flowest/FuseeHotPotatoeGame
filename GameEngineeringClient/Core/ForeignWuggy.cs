@@ -22,19 +22,17 @@ namespace Fusee.Tutorial.Core
 
         public ForeignWuggy(SynchronizationData syncData)
         {
-            this._connectedPlayerSyncData = new SynchronizationData();
+            this._connectedPlayerSyncData = syncData;
             _sceneContainer = AssetStorage.Get<Fusee.Serialization.SceneContainer>("Wuggy.fus");
             _wuggyTransform = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First()?.GetTransform();
             _wuggyMaterialComponent = _sceneContainer.Children.FindNodes(c => c.Name == "Wuggy").First().Children[1].GetMaterial();
             _wuggyTransform.Scale = new float3(1, 1, 1);
-
-            this._connectedPlayerSyncData = syncData;
         }
 
-        public void updateTransform(SynchronizationData synchData)
+        public void updateTransform()
         {
-            this._wuggyTransform.Translation = synchData._Translation;
-            this._wuggyTransform.Rotation = synchData._Rotation;
+            this._wuggyTransform.Translation = _connectedPlayerSyncData._Translation;
+            this._wuggyTransform.Rotation = _connectedPlayerSyncData._Rotation;
         }
 
         public void changeColor(float3 color)
