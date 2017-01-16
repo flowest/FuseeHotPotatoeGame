@@ -51,7 +51,6 @@ namespace Fusee.Tutorial.Core
 
         private void animateWuggy()
         {
-            float wuggyYawSpeed = _connectedPlayerSyncData._ControlInput._WSValue * _connectedPlayerSyncData._ControlInput._ADValue * 0.03f * Time.DeltaTime * 50;
             float wuggySpeed = _connectedPlayerSyncData._ControlInput._WSValue * -10 * Time.DeltaTime * 50;
 
             // Wuggy Wheels

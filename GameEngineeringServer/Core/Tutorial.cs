@@ -19,7 +19,6 @@ using NetworkHandler;
 
 namespace Fusee.Tutorial.Core
 {
-
     class Renderer : SceneVisitor
     {
         public ShaderEffect ShaderEffect;
@@ -151,7 +150,6 @@ namespace Fusee.Tutorial.Core
         }
     }
 
-
     [FuseeApplication(Name = "Tutorial Example", Description = "The official FUSEE Tutorial.")]
     public class Tutorial : RenderCanvas
     {
@@ -172,14 +170,6 @@ namespace Fusee.Tutorial.Core
 
         private bool _keys;
 
-        //private TransformComponent _wuggyTransform;
-        //private TransformComponent _wgyWheelBigR;
-        //private TransformComponent _wgyWheelBigL;
-        //private TransformComponent _wgyWheelSmallR;
-        //private TransformComponent _wgyWheelSmallL;
-        //private TransformComponent _wgyNeckHi;
-        //private List<Fusee.Serialization.SceneNodeContainer> _trees;
-
         private Renderer _renderer;
 
         MemoryStream memoryStream = new MemoryStream();
@@ -197,14 +187,10 @@ namespace Fusee.Tutorial.Core
         // Init is called on startup. 
         public override void Init()
         {
-
             _sceneScale = float4x4.CreateScale(0.04f);
-
 
             // Instantiate our self-written renderer
             _renderer = new Renderer(RC);
-
-
 
             // Set the clear color for the backbuffer
             RC.ClearColor = new float4(1, 1, 1, 1);
@@ -212,8 +198,6 @@ namespace Fusee.Tutorial.Core
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Server;
             netCon.StartPeer();
-
-
         }
 
         private void checkForColision()
@@ -267,8 +251,6 @@ namespace Fusee.Tutorial.Core
 
                     connectedClients.First(client => client._RemoteIPAdress == msg.Sender.RemoteEndPoint.Address)._ControlInput = controls;
                 }
-
-
             }
         }
 
@@ -336,8 +318,6 @@ namespace Fusee.Tutorial.Core
         // RenderAFrame is called once a frame
         public override void RenderAFrame()
         {
-
-
             Network.Instance.OnConnectionUpdate += handleConnections;
             getInputDataFromClients();
             calculateClientWuggyPositions();
@@ -350,8 +330,6 @@ namespace Fusee.Tutorial.Core
 
             // Clear the backbuffer
             RC.Clear(ClearFlags.Color | ClearFlags.Depth);
-
-
 
             // UpDown / LeftRight rotation
             if (Mouse.LeftButton)
@@ -377,10 +355,6 @@ namespace Fusee.Tutorial.Core
                 }
             }
 
-            //float wuggyYawSpeed = controls._WSValue * controls._ADValue * 0.03f * DeltaTime * 50;
-            //float wuggySpeed = controls._WSValue * -10 * DeltaTime * 50;
-
-
             _zoom += _zoomVel;
             // Limit zoom
             if (_zoom < 80)
@@ -399,7 +373,6 @@ namespace Fusee.Tutorial.Core
             // Wrap-around to keep _angleRoll between -PI and + PI
             _angleRoll = M.MinAngle(_angleRoll);
 
-
             // Create the camera matrix and set it as the current ModelView transformation
             var mtxRot = float4x4.CreateRotationZ(_angleRoll) * float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
             var mtxCam = float4x4.LookAt(0, 20, -_zoom, 0, 0, 0, 0, 1, 0);
@@ -409,8 +382,6 @@ namespace Fusee.Tutorial.Core
 
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
-
-
         }
 
         public static float NormRot(float rot)

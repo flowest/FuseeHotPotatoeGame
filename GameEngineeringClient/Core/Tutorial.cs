@@ -20,7 +20,6 @@ using static Fusee.Engine.Core.Time;
 
 namespace Fusee.Tutorial.Core
 {
-
     class Renderer : SceneVisitor
     {
         public ShaderEffect ShaderEffect;
@@ -152,7 +151,6 @@ namespace Fusee.Tutorial.Core
         }
     }
 
-
     [FuseeApplication(Name = "Tutorial Example", Description = "The official FUSEE Tutorial.")]
     public class Tutorial : RenderCanvas
     {
@@ -179,10 +177,8 @@ namespace Fusee.Tutorial.Core
         private TransformComponent _wgyWheelSmallR;
         private TransformComponent _wgyWheelSmallL;
         private TransformComponent _wgyNeckHi;
-        private List<SceneNodeContainer> _trees;
 
         private Renderer _renderer;
-
 
         private float3 catcherColor = new float3(1,0,0);
         private float3 defaultColor;
@@ -209,7 +205,6 @@ namespace Fusee.Tutorial.Core
             _scene = AssetStorage.Get<SceneContainer>("WuggyLand.fus");
             _sceneScale = float4x4.CreateScale(0.04f);
 
-
             // Instantiate our self-written renderer
             _renderer = new Renderer(RC);
 
@@ -222,22 +217,13 @@ namespace Fusee.Tutorial.Core
             _wgyNeckHi = _scene.Children.FindNodes(c => c.Name == "NeckHi").First()?.GetTransform();
             _wuggyMaterialComponent = _scene.Children.FindNodes(c => c.Name == "Wuggy").First().Children[1].GetMaterial();
             defaultColor = _wuggyMaterialComponent.Diffuse.Color;
-         
-            // Find the trees and store them in a list
-            _trees = new List<SceneNodeContainer>();
-            _trees.AddRange(_scene.Children.FindNodes(c => c.Name.Contains("Tree")));
 
             // Set the clear color for the backbuffer
             RC.ClearColor = new float4(1, 1, 1, 1);
 
             Network netCon = Network.Instance;
             netCon.Config.SysType = SysType.Client; ;
-            //netCon.Config.ConnectOnDiscovery = true;
-            //netCon.Config.Discovery = true;
-            //netCon.StartPeer();
 
-            //netCon.SendDiscoveryMessage();
-            // netCon.Config.SysType = SysType.Peer;
             netCon.StartPeer(1337);
             netCon.OpenConnection("192.168.1.25");
 
@@ -319,12 +305,10 @@ namespace Fusee.Tutorial.Core
                 if (ownSynchronizationData._IsPotatoe)
                 {
                     changeWuggyColor(catcherColor);
-
                 }
                 else
                 {
                     changeWuggyColor(defaultColor);
-
                 }
                 isPotatoe = ownSynchronizationData._IsPotatoe;
             }
@@ -517,23 +501,6 @@ namespace Fusee.Tutorial.Core
             // Swap buffers: Show the contents of the backbuffer (containing the currently rerndered farame) on the front buffer.
             Present();
 
-        }
-
-        private SceneNodeContainer GetClosest()
-        {
-            float minDist = float.MaxValue;
-            SceneNodeContainer ret = null;
-            foreach (var target in _trees)
-            {
-                var xf = target.GetTransform();
-                float dist = (_wuggyTransform.Translation - xf.Translation).Length;
-                if (dist < minDist && dist < 1000)
-                {
-                    ret = target;
-                    minDist = dist;
-                }
-            }
-            return ret;
         }
 
         public static float NormRot(float rot)
