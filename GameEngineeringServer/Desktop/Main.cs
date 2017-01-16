@@ -12,11 +12,6 @@ namespace Fusee.Tutorial.Desktop
 {
     public class Simple
     {
-
-
-        //Custom stuff
-        private static bool isServer = true;
-
         public static void Main()
         {
             // Inject Fusee.Engine.Base InjectMe dependencies
