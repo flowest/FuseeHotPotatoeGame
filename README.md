@@ -129,12 +129,12 @@ namespace SerializedNetworkClasses
     public class SerializeExample
     {
         [ProtoMember(1)]
-        public string exampleString = "I am a string that is going to be serialized!";
+        public string exampleString;
 
         [ProtoMember(2)]
-        public float exampleFoat = 0.123456789f;
+        public float exampleFloat;
     }
 }
 ```
 
-First, the class and all its fields have to be public. In addition the annotation ```[ProtoContract]``` is necessary to mark the class to be serialized. Also each field needs a ```[ProtoMember(*id*)]```annotation, where the *id* has to be unique.
+First, the class and all its fields have to be public. In addition the annotation ```[ProtoContract]``` is necessary to mark the class to be serialized. Also each field needs a ```[ProtoMember(id)]```annotation, where the *id* has to be a unique integer.
