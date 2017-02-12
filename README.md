@@ -71,8 +71,10 @@ Repeat the steps from the [Test your code](#test-your-code) section and look at 
 
 When you close the client application, the Output window should contain something like this:
 
-![Connected](img/2.1_OnConnectionUpdateLog.JPG)
+![Disonnected](img/2.1_OnConnectionUpdateLog.JPG)
 
+
+You are now able to create a connection to a server and react to connection updates. In the next steps you will learn how to serialize and send data between both applications over the network.
 
 Server: isServer
 Client: IP, Port
