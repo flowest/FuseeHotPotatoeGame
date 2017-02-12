@@ -47,6 +47,8 @@ Configuring the client application is similar. Add this to the ```Init()``` meth
  
 When you look in the Autos window in Visual Studio and search
 
+![ConnectionEstablished](https://drive.google.com/file/d/0B0tX0v84FMaGTUlINmZNZHp5aTg/view?usp=sharing)
+
 Server: isServer
 Client: IP, Port
 Breakpoint
