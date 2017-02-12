@@ -123,6 +123,8 @@ After this, you have to create a .bat file that executes the precompile tool. Op
 Now you can add your first class with data you want to serialize to the SerializedNetworkClasses project. For example, add new class named "SerializeExample" that could look like this:
 
 ```C#
+using ProtoBuf;
+
 namespace SerializedNetworkClasses
 {
     [ProtoContract]
@@ -138,3 +140,7 @@ namespace SerializedNetworkClasses
 ```
 
 First, the class and all its fields have to be public. In addition the annotation ```[ProtoContract]``` is necessary to mark the class to be serialized. Also each field needs a ```[ProtoMember(id)]```annotation, where the *id* has to be a unique integer.
+
+If you now rebuild the SerializedNetworkClasses, you should see "All done" in the Output window in Visual Studio:
+
+![alldone](img/6_PostCompile.JPG)
