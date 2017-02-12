@@ -67,7 +67,12 @@ Everytime, a connection on the ```Network.Instance``` changes, ```ConnectionUpda
  
 Repeat the steps from the [Test your code](#test-your-code) section and look at the Output window in Visual Studio of your server solution. When the client application starts, you should see a similar message to this:
 
-![Connected](https://github.com/flowest/FuseeNetwork/blob/Tutorial/img/2_OnConnectionUpdateLog.JPG)
+![Connected](img/2_OnConnectionUpdateLog.JPG)
+
+When you close the client application, the Output window should contain something like this:
+
+![Connected](img/2.1_OnConnectionUpdateLog.JPG)
+
 
 Server: isServer
 Client: IP, Port
