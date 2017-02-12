@@ -5,7 +5,7 @@ You will learn about how to establish a connection between a client and a server
 ##Getting started
 To make this tutorial as easy as possible, the client and server application are two seperated solutions. This will help you seperate the role of each application at any time.
 
-Before you start, make sure you have the latest version of Fusee and your FuseeRoot enviroment variable is set on your system and points to the right location.
+Before you start, make sure you have the latest version of Fusee, your ```FuseeRoot``` enviroment variable is set on your system and points to the right location. Also build the ```Fusee.Engine.Imp.Network.Desktop.csproj``` in the ```Fusee.Engine.Simple.sln```. You will need the generated .DLL-File for the next steps.
 
 ###Server
 
