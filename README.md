@@ -76,7 +76,12 @@ When you close the client application, the Output window should contain somethin
 
 You are now able to create a connection to a server and react to connection updates. In the next steps you will learn how to serialize and send data between both applications over the network.
 
-Server: isServer
-Client: IP, Port
-Breakpoint
-##
+##Send and recieve serialized data
+The reason why you are reading this tutorial, is probably that you want to send data over the network. This can only happen with serialized data. Fusee already uses a tool, espcially for seralizing data in C#, called [Protobuf](https://github.com/mgravell/protobuf-net). You will learn how to use this tool to serialize data for network usage.
+
+###Set up Protobuf
+Make sure to follow these steps carefully and in the right order. Setting up Protobuf is the most complex part of this tutorial.
+
+First, add a new project to you server solution. This project will contain all classes that are serialized and can be send over the network. To add a new project rightclick the .sln file in the project explorer in Visual Studio, go to "Add" --> "New project..." choose "Class Library (Portable)" and name it "SerializedNetworkClasses". Finally click "Add" and set following configurations in the appearing window:
+
+![Settings](img/3_ProjectConfig.JPG)
