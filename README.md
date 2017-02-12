@@ -114,8 +114,27 @@ in the Post-build event command line:
 
 ![Config](img/5_PostCompileConfig.JPG)
 
-After this, you have to create a .bat file that executes the precompile tool. Open the folder containing the SerializedNetworkClasses.csproj file. In the same directory, add a new folder named "ext". Inside this folder create a new .bat file with the content:
+After this, you have to create a .bat file that executes the precompile tool. Open the folder containing the SerializedNetworkClasses.csproj file. In the same directory, add a new folder named "ext". Inside this folder create a new .bat file with the name "executeProtoBufPrecompile" and content:
 
 ```
 %FuseeRoot%\ext\protobuf\PrecompileTool\precompile %~dp0\..\bin\Debug\SerializedNetworkClasses.dll -o:%~dp0\..\bin\Debug\NetworkClassesSerializer.dll -t:NetworkClassesSerializer
 ```
+
+Now you can add your first class with data you want to serialize to the SerializedNetworkClasses project. For example, add new class named "SerializeExample" that could look like this:
+
+```C#
+namespace SerializedNetworkClasses
+{
+    [ProtoContract]
+    public class SerializeExample
+    {
+        [ProtoMember(1)]
+        public string exampleString = "I am a string that is going to be serialized!";
+
+        [ProtoMember(2)]
+        public float exampleFoat = 0.123456789f;
+    }
+}
+```
+
+First, the class and all its fields have to be public. In addition the annotation ```[ProtoContract]``` is necessary to mark the class to be serialized. Also each field needs a ```[ProtoMember(*id*)]```annotation, where the *id* has to be unique.
