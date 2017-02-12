@@ -102,3 +102,14 @@ Locate the node that looks similar to this:
  ```XML
  <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
  ```
+
+The next step is, to tell Protobufs precompile tool to use your ```SerializedNetworkClasses.dll``` which is generated when the project is build. Out of this .DLL file, the precompile tool will create a new .DLL that will allow you to serialize your classes inside the SerializedNetworkClasses project.
+To run the precompile tool after each build, Visual Studio offers the possibility to execute post build events. Therefore, rightclick the SerializedNetworkClasses project in the solution explorer, select "Properties" and open the "Build Events" tab on the left.
+Enter
+
+```
+$(ProjectDir)ext\executeProtoBufPrecompile.bat
+```
+in the Post-build event command line:
+
+![Config](img/5_PostCompileConfig.JPG)
