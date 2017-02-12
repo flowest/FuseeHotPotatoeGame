@@ -12,6 +12,17 @@ Before you start, make sure you have the latest version of Fusee, your ```FuseeR
 ###Client
 
 ##Your first connection with Fusee
+
+###Server
+To set up the server, go to the ```Init();``` method in ```Tutorial.cs``` from the ```Fusee.TutorialNetworkServer.sln``` and add the following lines:
+
+  ```C#
+    Network netCon = Network.Instance;
+    netCon.Config.SysType = SysType.Server;
+    netCon.StartPeer();
+  ```
+
+
 Server: isServer
 Client: IP, Port
 Breakpoint
