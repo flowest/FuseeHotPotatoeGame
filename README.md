@@ -91,7 +91,7 @@ Locate the node that looks similar to this:
  ```XML
  <ItemGroup>
   <Reference Include="protobuf-net">
-   <HintPath>..\..\..\..\..\Fusee\ext\protobuf\protobuf-net.dll</HintPath>
+    <HintPath>..\..\..\..\..\Fusee\ext\protobuf\protobuf-net.dll</HintPath>
   </Reference>
  </ItemGroup> 
  ```
