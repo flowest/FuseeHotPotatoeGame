@@ -45,9 +45,11 @@ Configuring the client application is similar. Add this to the ```Init()``` meth
  - 2. Start the ```Fusee.TutorialNetworkClient.sln```
  - 3. Set a breakpoint somewhere in ```RenderAFrame()``` in ```Tutorial.cs``` in the server solution
  
-When you look in the Autos window in Visual Studio and search
+When you look in the Autos window in Visual Studio and search for ```this.NetworkImplementor.Connections[0]._remoteEndpoint``` you should see the clients IP address and port, connected to the server:
 
 ![ConnectionEstablished](img/1_ConnectionEstablished.JPG)
+
+
 
 Server: isServer
 Client: IP, Port
