@@ -50,6 +50,21 @@ When you look in the Autos window in Visual Studio and search for ```this.Networ
 ![ConnectionEstablished](img/1_ConnectionEstablished.JPG)
 
 
+###Make the server react to connecting clients
+Now, that the client is connected with the server, you will see how to react on connection updates. Therefore you implement an event listener inside the servers ```RenderAFrame()``` method in ```Tutorial.cs```:
+
+ ```C#
+  Network.Instance.OnConnectionUpdate += ConnectionUpdate;
+ ```
+Everytime, a connection on the ```Network.Instance``` changes, ```ConnectionUpdate()``` is called. Implement the ```ConnectionUpdate()``` method somewhere in ```Tutorial.cs```:
+
+ ```C#
+ private void ConnectionUpdate(ConnectionStatus estatus, INetworkConnection connection)
+ {
+  Debug.WriteLine("Connection update from: " + connection.RemoteEndPoint.Address + " which connected from port: " + connection.RemoteEndPoint.Port + ". Status: " + estatus);
+ }
+ ```
+
 
 Server: isServer
 Client: IP, Port
