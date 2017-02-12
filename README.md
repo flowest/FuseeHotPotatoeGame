@@ -144,3 +144,7 @@ First, the class and all its fields have to be public. In addition the annotatio
 If you now rebuild the SerializedNetworkClasses, you should see "All done" in the Output window in Visual Studio:
 
 ![alldone](img/6_PostCompile.JPG)
+
+In your "Debug" folder from the server solution you should see this two .DLL files:
+
+![twoDLLs](img/6.1_dlls.JPG)
