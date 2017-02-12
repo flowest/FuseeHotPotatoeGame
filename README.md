@@ -89,6 +89,7 @@ First, add a new project to you server solution. This project will contain all c
 Next, open the "References" node from the recently added project, rightclick on it an select "Add Reference...". Click "Browse" in the lower right corner and browse to your Fusee directory. You can find the ```protobuf-net.dll``` in ```ext/protobuf```. Now **save** the SerializedNetworkClasses project. The ```protobuf-net.dll``` is now linked with an absolute path according to your Fusee installation and its directory. However, if you want to run your application on different machines, that have a different Fusee installation path, the ```protobuf-net.dll``` won't be found. To solve this problem, you have to link the .DLL file with a relative path to your ```FuseeRoot``` enviroment variable. To do this, rightclick on the SerializedNetworkClasses project and select "Open Folder in File Explorer". Find the ```SerializedNetworkClasses.csproj``` file and open it with an editor (i.e. Notepad++).
 Locate the node that looks similar to this:
 
+<div id="rellink"></div>
  ```XML
  <ItemGroup>
     <Reference Include="protobuf-net">
@@ -149,4 +150,4 @@ In your "Debug" folder from the server solution you should see this two .DLL fil
 
 ![twoDLLs](img/6.1_dlls.JPG)
 
-In the last step, you have to integrate these two .DLL files and the ```protobuf-net.dll``` in you client and server application. To do this, rightclick the "References" node in the respective "Core" project of both applications, select "Add Reference..." and add the same ```protobuf-net.dll``` like before. Also add the two .DLL files located in the server applications Debug folder in the same way to both applications. Don't forget to link the ```protobuf-net.dll``` relatively to your ```FuseeRoot``` enviroment variable, like you did [before](#set-up-protobuf)
+In the last step, you have to integrate these two .DLL files and the ```protobuf-net.dll``` in you client and server application. To do this, rightclick the "References" node in the respective "Core" project of both applications, select "Add Reference..." and add the same ```protobuf-net.dll``` like before. Also add the two .DLL files located in the server applications Debug folder in the same way to both applications. **Save** your respective project. Don't forget to link the ```protobuf-net.dll``` relatively to your ```FuseeRoot``` enviroment variable, like you did [before](#rellink).
