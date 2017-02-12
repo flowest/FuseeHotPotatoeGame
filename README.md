@@ -113,3 +113,9 @@ $(ProjectDir)ext\executeProtoBufPrecompile.bat
 in the Post-build event command line:
 
 ![Config](img/5_PostCompileConfig.JPG)
+
+After this, you have to create a .bat file that executes the precompile tool. Open the folder containing the SerializedNetworkClasses.csproj file. In the same directory, add a new folder named "ext". Inside this folder create a new .bat file with the content:
+
+```
+%FuseeRoot%\ext\protobuf\PrecompileTool\precompile %~dp0\..\bin\Debug\SerializedNetworkClasses.dll -o:%~dp0\..\bin\Debug\NetworkClassesSerializer.dll -t:NetworkClassesSerializer
+```
