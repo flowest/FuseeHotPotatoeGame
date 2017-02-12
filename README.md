@@ -61,7 +61,7 @@ Everytime, a connection on the ```Network.Instance``` changes, ```ConnectionUpda
  ```C#
  private void ConnectionUpdate(ConnectionStatus estatus, INetworkConnection connection)
  {
-  Debug.WriteLine("Connection update from: " + connection.RemoteEndPoint.Address + " which connected from port: " + connection.RemoteEndPoint.Port + ". Status: " + estatus);
+   Debug.WriteLine("Connection update from: " + connection.RemoteEndPoint.Address + " which connected from port: " + connection.RemoteEndPoint.Port + ". Status: " + estatus);
  }
  ```
 
