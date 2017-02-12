@@ -14,14 +14,29 @@ Before you start, make sure you have the latest version of Fusee, your ```FuseeR
 ##Your first connection with Fusee
 
 ###Server
-To set up the server, go to the ```Init();``` method in ```Tutorial.cs``` from the ```Fusee.TutorialNetworkServer.sln``` and add the following lines:
+To set up the server, go to the ```Init()``` method in ```Tutorial.cs``` from the ```Fusee.TutorialNetworkServer.sln``` and add the following lines:
 
   ```C#
-    Network netCon = Network.Instance;
-    netCon.Config.SysType = SysType.Server;
-    netCon.StartPeer();
+  Network netCon = Network.Instance;
+  netCon.Config.SysType = SysType.Server;
+  netCon.StartPeer();
   ```
+First you need a reference to the ```Network.Instance``` object, which is a singelton in Fusee. Next you configure this reference as server and start it. ```StartPeer()``` starts the server application on the default port 14242 but you can also start it on a custom port by passing it as a parameter.
 
+That's it! The server runs on the default port and is available under your machines IP address (or 127.0.0.1 from the same machine).
+
+###Client
+Configuring the client application is similar. Add this to the ```Init()``` method in ```Tutorial.cs``` from the ```Fusee.TutorialNetworkClient.sln```:
+
+ ```C#
+  Network netCon = Network.Instance;
+  netCon.Config.SysType = SysType.Client; ;
+
+  netCon.StartPeer(1337);
+  netCon.OpenConnection("127.0.0.1");
+  ```
+  
+ Besides the configuration as client, you also have to start a peer (note that the client peer is started on a certain port, because the server runs on the same machine and already uses the default port 14242). Next you open a connection to a certain IP address (in this case to the localhost).
 
 Server: isServer
 Client: IP, Port
