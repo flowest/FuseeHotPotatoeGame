@@ -38,7 +38,7 @@ Configuring the client application is similar. Add this to the ```Init()``` meth
   
  Besides the configuration as client, you also have to start a peer (note that the client peer is started on a certain port, because the server runs on the same machine and already uses the default port 14242). Next you open a connection to a certain IP address (in this case to the localhost).
  
- ###Test your code
+###Test your code
  To verify, that the client connects to your server follow these steps:
  
  - 1. Start the ```Fusee.TutorialNetworkServer.sln```
