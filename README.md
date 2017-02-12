@@ -85,3 +85,5 @@ Make sure to follow these steps carefully and in the right order. Setting up Pro
 First, add a new project to you server solution. This project will contain all classes that are serialized and can be send over the network. To add a new project rightclick the .sln file in the project explorer in Visual Studio, go to "Add" --> "New project..." choose "Class Library (Portable)" and name it "SerializedNetworkClasses". Finally click "Add" and set following configurations in the appearing window:
 
 ![Settings](img/3_ProjectConfig.JPG)
+
+Next, open the "References" node from the recently added project, rightclick on it an select "Add Reference...". Click "Browse" in the lower right corner and browse to your Fusee directory. You can find the ```protobuf-net.dll``` in ```ext/protobuf```. Now *save and rebuild* the SerializedNetworkClasses project.
