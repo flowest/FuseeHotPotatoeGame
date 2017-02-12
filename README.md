@@ -43,6 +43,9 @@ Configuring the client application is similar. Add this to the ```Init()``` meth
  
  - 1. Start the ```Fusee.TutorialNetworkServer.sln```
  - 2. Start the ```Fusee.TutorialNetworkClient.sln```
+ - 3. Set a breakpoint somewhere in ```RenderAFrame()``` in ```Tutorial.cs``` in the server solution
+ 
+When you look in the Autos window in Visual Studio and search
 
 Server: isServer
 Client: IP, Port
