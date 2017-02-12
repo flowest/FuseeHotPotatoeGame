@@ -150,4 +150,6 @@ In your "Debug" folder from the server solution you should see this two .DLL fil
 
 ![twoDLLs](img/6.1_dlls.JPG)
 
-In the last step, you have to integrate these two .DLL files and the ```protobuf-net.dll``` in you client and server application. To do this, rightclick the "References" node in the respective "Core" project of both applications, select "Add Reference..." and add the same ```protobuf-net.dll``` like before. Also add the two .DLL files located in the server applications Debug folder in the same way to both applications. **Save** your respective project. Don't forget to link the ```protobuf-net.dll``` relatively to your ```FuseeRoot``` enviroment variable, like you did [before](#rellink).
+In the last step, you have to integrate these two .DLL files and the ```protobuf-net.dll``` in you client and server application. To do this, rightclick the "References" node in the respective "Core" project of both applications, select "Add Reference..." and add the same ```protobuf-net.dll``` like before. Also add the two .DLL files located in the server applications Debug folder in the same way to both applications. **Save** your respective project. Don't forget to link (just) the ```protobuf-net.dll``` relatively to your ```FuseeRoot``` enviroment variable, like you did [before](#rellink).
+
+If you are able to rebuild your projects, you did everything right.
