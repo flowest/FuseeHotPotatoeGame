@@ -64,7 +64,10 @@ Everytime, a connection on the ```Network.Instance``` changes, ```ConnectionUpda
    Debug.WriteLine("Connection update from: " + connection.RemoteEndPoint.Address + " which connected from port: " + connection.RemoteEndPoint.Port + ". Status: " + estatus);
  }
  ```
+ 
+Repeat the steps from the [Test you code](###Test your code) section and look at the Output window in Visual Studio of your server solution. When the client application starts, you should see a similar message to this:
 
+![Connected](https://github.com/flowest/FuseeNetwork/blob/Tutorial/img/2_OnConnectionUpdateLog.JPG)
 
 Server: isServer
 Client: IP, Port
