@@ -2,11 +2,9 @@
 using Fusee.Base.Common;
 using Fusee.Base.Core;
 using Fusee.Base.Imp.Desktop;
-using Fusee.Engine.Common;
 using Fusee.Engine.Core;
 using Fusee.Serialization;
 using Path = Fusee.Base.Common.Path;
-
 
 namespace Fusee.Tutorial.Desktop
 {
@@ -25,7 +23,7 @@ namespace Fusee.Tutorial.Desktop
                     Decoder = delegate (string id, object storage)
                     {
                         if (!Path.GetExtension(id).ToLower().Contains("ttf")) return null;
-                        return new Font { _fontImp = new FontImp((Stream)storage) };
+                        return new Font{ _fontImp = new FontImp((Stream)storage) };
                     },
                     Checker = id => Path.GetExtension(id).ToLower().Contains("ttf")
                 });
@@ -49,7 +47,6 @@ namespace Fusee.Tutorial.Desktop
             // Inject Fusee.Engine InjectMe dependencies (hard coded)
             app.CanvasImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasImp();
             app.ContextImplementor = new Fusee.Engine.Imp.Graphics.Desktop.RenderContextImp(app.CanvasImplementor);
-            app.NetworkImplementor = new Fusee.Engine.Imp.Network.Desktop.NetworkImp();
             Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.RenderCanvasInputDriverImp(app.CanvasImplementor));
             Input.AddDriverImp(new Fusee.Engine.Imp.Graphics.Desktop.WindowsTouchInputDriverImp(app.CanvasImplementor));
             // app.InputImplementor = new Fusee.Engine.Imp.Graphics.Desktop.InputImp(app.CanvasImplementor);
@@ -57,20 +54,6 @@ namespace Fusee.Tutorial.Desktop
             // app.NetworkImplementor = new Fusee.Engine.Imp.Network.Desktop.NetworkImp();
             // app.InputDriverImplementor = new Fusee.Engine.Imp.Input.Desktop.InputDriverImp();
             // app.VideoManagerImplementor = ImpFactory.CreateIVideoManagerImp();
-
-
-            ////Server Code
-
-            //NetworkImp networkContext = new NetworkImp();
-            //System.Diagnostics.Debug.WriteLine(networkContext.GetLocalIp());
-
-            //networkContext.Config.SysType = SysType.Server;
-            
-            //networkContext.StartPeer(14242);
-
-         
-
-            //System.Diagnostics.Debug.WriteLine(networkContext.IncomingMsg);
 
             // Start the app
             app.Run();
