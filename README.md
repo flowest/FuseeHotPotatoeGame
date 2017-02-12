@@ -90,9 +90,9 @@ Next, open the "References" node from the recently added project, rightclick on 
 Locate the node that looks similar to this:
  ```XML
  <ItemGroup>
-  <Reference Include="protobuf-net">
-    <HintPath>..\..\..\..\..\Fusee\ext\protobuf\protobuf-net.dll</HintPath>
-  </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\..\..\..\..\Fusee\ext\protobuf\protobuf-net.dll</HintPath>
+    </Reference>
  </ItemGroup> 
  ```
  
