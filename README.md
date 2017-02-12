@@ -65,7 +65,7 @@ Everytime, a connection on the ```Network.Instance``` changes, ```ConnectionUpda
  }
  ```
  
-Repeat the steps from the [Test your code](#Test your code) section and look at the Output window in Visual Studio of your server solution. When the client application starts, you should see a similar message to this:
+Repeat the steps from the [Test your code](#Test-your-code) section and look at the Output window in Visual Studio of your server solution. When the client application starts, you should see a similar message to this:
 
 ![Connected](https://github.com/flowest/FuseeNetwork/blob/Tutorial/img/2_OnConnectionUpdateLog.JPG)
 
