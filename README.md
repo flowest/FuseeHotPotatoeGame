@@ -88,6 +88,7 @@ First, add a new project to you server solution. This project will contain all c
 
 Next, open the "References" node from the recently added project, rightclick on it an select "Add Reference...". Click "Browse" in the lower right corner and browse to your Fusee directory. You can find the ```protobuf-net.dll``` in ```ext/protobuf```. Now **save and rebuild** the SerializedNetworkClasses project. The ```protobuf-net.dll``` is now linked with an absolute path according to your Fusee installation and its directory. However, if you want to run your application on different machines, that have a different Fusee installation path, the ```protobuf-net.dll``` won't be found. To solve this problem, you have to link the .DLL file with a relative path to your ```FuseeRoot``` enviroment variable. To do this, rightclick on the SerializedNetworkClasses project and select "Open Folder in File Explorer". Find the ```SerializedNetworkClasses.csproj``` file and open it with an editor (i.e. Notepad++).
 Locate the node that looks similar to this:
+
  ```XML
  <ItemGroup>
     <Reference Include="protobuf-net">
@@ -96,3 +97,8 @@ Locate the node that looks similar to this:
  </ItemGroup> 
  ```
  
+ Replace the ```<HintPath>``` node with a link, relative to your Fusee installation, using the enviroment variable:
+ 
+ ```XML
+ <HintPath>$(FuseeRoot)ext\protobuf\protobuf-net.dll</HintPath>
+ ```
