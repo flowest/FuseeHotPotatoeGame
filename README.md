@@ -244,8 +244,8 @@ Network.Instance.SendMessage(serializedBytes, MessageDelivery.ReliableOrdered, 2
 ```
 
 On the receiving application use:
- ```C#I
- NetworkMsg msg;
+ ```C#
+ INetworkMsg msg;
 
  while ((msg = Network.Instance.IncomingMsg) != null)
  {
@@ -267,6 +267,17 @@ On the receiving application use:
    }
  }
  ```
+ 
+###Avoid serializing objects like ```List```
+Due to asynchronious code execution from server and client, objects like ```List```s often contain ```null``` sequences, so try to handle these only locally and rather work with single object that are send over the network, than sending the whole ```List```.
+ 
+###Use the server as central unit
+To keep everything synchronious especially if you have multiple clients connected to your server, let the server do all calculations and distribute the results to the clients. Just send the information from the client to the server and let it handle these data. So every client will get the same results that don't differ from one another.
+
+###Use more tiny classes than one huge
+It's important to keep in mind, that the traffic over the network should always be as small as possible. Therefore it's usually better to serialize and send small classes, than doing this with one huge class, although you just need a single property on the receiving side.
 
 ##Time to practice
-*Also print the ```MessageChannel``` on the Output window
+* Also print the ```MessageChannel``` on the Output window
+* Serialize and send a second class with other properties from client to server, when the "L" key is pressed
+* Send a message from the server to client application and print it out.
