@@ -225,7 +225,7 @@ namespace Fusee.Tutorial.Core
             netCon.Config.SysType = SysType.Client; ;
 
             netCon.StartPeer(1337);
-            netCon.OpenConnection("192.168.1.25");
+            netCon.OpenConnection("141.28.133.133");
 
             LongLocalIP = IP2Long(NetworkImplementor.GetLocalIp());
         }
@@ -485,8 +485,10 @@ namespace Fusee.Tutorial.Core
 
             // Create the camera matrix and set it as the current ModelView transformation
             var mtxRot = float4x4.CreateRotationZ(_angleRoll) * float4x4.CreateRotationX(_angleVert) * float4x4.CreateRotationY(_angleHorz);
-            var mtxCam = float4x4.LookAt(0, 20, -_zoom, 0, 0, 0, 0, 1, 0);
-            _renderer.View = mtxCam * mtxRot * _sceneScale;
+            float4 cameraPos = _sceneScale*float4x4.CreateTranslation(_wuggyTransform.Translation)*float4x4.CreateRotationY(_wuggyTransform.Rotation.y)*float4x4.CreateRotationY(_angleHorz)* new float4(0, 500, 1000, 1);
+            float4 cameraLook = _sceneScale * float4x4.CreateTranslation(_wuggyTransform.Translation)* new float4(1,5,-1,1);
+            var mtxCam = float4x4.LookAt(cameraPos.x, cameraPos.y,cameraPos.z, cameraLook.x,cameraLook.y,cameraLook.z, 0, 1, 0);
+            _renderer.View = mtxCam  * _sceneScale;
             var mtxOffset = float4x4.CreateTranslation(2 * _offset.x / Width, -2 * _offset.y / Height, 0);
             RC.Projection = mtxOffset * _projection;
 
