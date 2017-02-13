@@ -226,3 +226,8 @@ Finally check if ```exampleData``` contains something and write its properties o
 To test your code, start the server and the client application. Focus the client window that appears on start and press spacebar. If you look at the Output window from the server solution in Visual Studio you should see something like this:
 
 ![proof](img/8_proofed.JPG)
+
+Congratulations! You have send serialized data over the network from one application to another, using Fusees network capabilities!
+You learned the basics to develop a network-based application and are ready to go. [Below](#best-practices) you will find some Best Practices and advice that may help you.
+
+##Best Practices
