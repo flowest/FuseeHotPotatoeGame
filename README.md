@@ -190,3 +190,7 @@ Last, you have to implement the procedures described in the [paragraph above](#d
   }
 
 ```
+
+Whenever the spacebar is pressed (and the application window is in focus), the client will serialize and send the ```exampleData``` object to the server. To actually send a message, you use the ```Network.Instance.SendMessage()``` method, also mentioned earlier, which expects a byteArray, a type of an enum that describes the way the packets are send over the network and a channel number on which the message is send.
+
+####Server
