@@ -155,4 +155,38 @@ In the last step, you have to integrate these two .DLL files and the ```protobuf
 If you are able to rebuild your projects, you did everything right.
 
 ###Finally send and receive data
-Now, that Protobuf is set up, you will learn how to send and receive data. The next steps will show, how to send data from the client and receive 
+Now, that Protobuf is set up, you will learn how to send and receive data. The next steps will show you, how to send data from the client and receive it on the server application.
+
+####Client
+Open the ```Tutorial.cs``` in the ```Fusee.TutorialNetworkClient.sln``` and add the following lines:
+
+```C#
+ private MemoryStream memoryStream = new MemoryStream();
+ private byte[] serializedBytes;
+ private NetworkClassesSerializer networkClassesSerializer = new NetworkClassesSerializer();
+ private SerializeExample exmapleData = new SerializeExample();
+```
+
+<div id="descr"></div>
+The ```memoryStream``` is used by the ```networkSerializer```, from the protobuf-generated ```NetworkClassesSerializer.dll```, which serializes the ```exampleData``` from ```SerializedNetworkClasses.dll```. The ```serializedBytes``` field is needed to use Fusees ```SendMessage()``` method, which expects a byteArray that contains the serialized data.
+
+To fill the ```exampleData``` with example data, add this inside the ```Init()``` method:
+
+```C#
+ exmapleData.exampleString = "I am a string that is going to be serialized!";
+ exmapleData.exampleFoat = 0.1234f;
+```
+
+Last, you have to implement the procedures described in the [paragraph above](#descr) inside the ```RenderAFrame()``` method.
+
+```C#
+ if (Keyboard.IsKeyDown(KeyCodes.Space))
+ {
+    memoryStream = new MemoryStream();
+    networkClassesSerializer.Serialize(memoryStream, exmapleData);
+    serializedBytes = memoryStream.ToArray();
+    Network.Instance.SendMessage(serializedBytes, MessageDelivery.ReliableOrdered, 1);
+    memoryStream.Dispose(); 
+  }
+
+```
