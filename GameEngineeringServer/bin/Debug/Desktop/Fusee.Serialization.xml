@@ -101,6 +101,29 @@
             Spherical interpolation. float3 are interpreted as Euler angles and interpolated in a shortest-path way using <see cref="T:Fusee.Math.Core.Quaternion"/>s.
             </summary>
         </member>
+        <member name="T:Fusee.Serialization.KeyType">
+            <summary> 
+            Symbolic value describing the data type of the key values stored in an animation track. 
+            </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Double">
+            <summary> Key contains double values. </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Int">
+            <summary> Key contains int values. </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Float">
+            <summary> Key contains float values. </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Float2">
+            <summary> Key contains float2 values. </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Float3">
+            <summary> Key contains float3 values. </summary>
+        </member>
+        <member name="F:Fusee.Serialization.KeyType.Float4">
+            <summary> Key contains float4 values. </summary>
+        </member>
         <member name="T:Fusee.Serialization.AnimationTrackContainer">
             <summary>
             Stores data about a single animation track (mainly a list of keyframes)
