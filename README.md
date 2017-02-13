@@ -6,10 +6,8 @@ You will learn about how to establish a connection between a client and a server
 To make this tutorial as easy as possible, the client and server application are two seperated solutions. This will help you seperate the role of each application at any time.
 
 Before you start, make sure you have the latest version of Fusee, your ```FuseeRoot``` enviroment variable is set on your system and points to the right location. Also build the ```Fusee.Engine.Imp.Network.Desktop.csproj``` in the ```Fusee.Engine.Simple.sln```. You will need the generated .DLL-File for the next steps.
+To avoid problems by getting a connection you should disable your windows firewall.
 
-###Server
-
-###Client
 
 ##Your first connection with Fusee
 
@@ -194,3 +192,29 @@ Last, you have to implement the procedures described in the [paragraph above](#d
 Whenever the spacebar is pressed (and the application window is in focus), the client will serialize and send the ```exampleData``` object to the server. To actually send a message, you use the ```Network.Instance.SendMessage()``` method, also mentioned earlier, which expects a byteArray, a type of an enum that describes the way the packets are send over the network and a channel number on which the message is send.
 
 ####Server
+In order to reveive messages on the server you also need a ```MemoryStream``` and ```NetworkClassesSerializer``` field in ```Tutorial.cs```:
+
+```C#
+ private MemoryStream memoryStream;
+ private NetworkClassesSerializer networkClassesSerializer = new NetworkClassesSerializer();
+```
+
+Inside ```RenderAFrame()``` add the following lines:
+
+```C#
+ INetworkMsg msg;
+            
+ while ((msg = Network.Instance.IncomingMsg) != null)
+ {
+   if (msg.Type == MessageType.Data)
+   {
+     memoryStream = new MemoryStream(msg.Message.ReadBytes);
+     SerializeExample exampleData = (SerializeExample)networkClassesSerializer.Deserialize(memoryStream, null, typeof(SerializeExample));
+
+     if (exampleData != null)
+     {
+       Debug.WriteLine(exampleData.exampleString + " - " + exampleData.exampleFloat);
+     }
+    }
+  }
+```
