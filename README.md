@@ -230,4 +230,43 @@ To test your code, start the server and the client application. Focus the client
 Congratulations! You have send serialized data over the network from one application to another, using Fusees network capabilities!
 You learned the basics to develop a network-based application and are ready to go. [Below](#best-practices) you will find some Best Practices and advice that may help you.
 
+
 ##Best Practices
+Some of these advice are implemented in the [Hot Potatoe Wuggy Game](#), which can also be used to get familiar with Fusees network capabilities.
+
+###Use different channels to send several objects
+Use differend channels to send messages on the sending application:
+
+```C#
+//send on channel 1 and 2
+Network.Instance.SendMessage(serializedBytes, MessageDelivery.ReliableOrdered, 1);
+Network.Instance.SendMessage(serializedBytes, MessageDelivery.ReliableOrdered, 2);
+```
+
+On the receiving application use:
+ ```C#I
+ NetworkMsg msg;
+
+ while ((msg = Network.Instance.IncomingMsg) != null)
+ {
+               
+   if (msg.Type == MessageType.Data)
+   {
+     switch (msg.Message.MsgChannel)
+     {
+       case 1:
+         //Message arrives on channel 1
+         //desirialize object from type foo
+       break;
+
+       case 2:
+         //Message ariives on channel 2
+         //desirialize object from type bar
+       break;
+     }
+   }
+ }
+ ```
+
+##Time to practice
+*Also print the ```MessageChannel``` on the Output window
