@@ -218,3 +218,11 @@ Inside ```RenderAFrame()``` add the following lines:
     }
   }
 ```
+
+In Fusee, messages also appear like a stream on the network. That's why you have to have to read them out of the ```Network.Instance.IncomingMsg``` object with the use of a while loop. Next we check the ```MessageType``` for ```Data```. The ```SendMessage()``` method we used in the client automatically declares the ```MessageType``` as ```Data```, but there are also other types available like ```DebugMessage```, ```ErrorMessage```, ```WarningMessage``` etc.
+Next we have to read the bytes from ```msg``` into the recently created ```memoryStream``` and then deserialize them with the ```networkClassesDeserializer``` object. Note that the deserialized object is also casted to our expected type, we sent from the client.
+Finally check if ```exampleData``` contains something and write its properties on the Output window in Visual Studio.
+
+To test your code, start the server and the client application. Focus the client window that appears on start and press spacebar. If you look at the Output window from the server solution in Visual Studio you should see something like this:
+
+![proof](img/8_proofed.JPG)
